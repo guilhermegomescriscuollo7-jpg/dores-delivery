@@ -23,6 +23,7 @@
         .empty-cart p { color: #717171; margin-bottom: 20px; font-size: 0.95rem; }
         .btn-primary { background: #ea1d2c; color: #fff; border: none; padding: 14px 20px; border-radius: 8px; font-weight: bold; font-size: 1rem; width: 100%; text-align: center; display: inline-block; text-decoration: none; cursor: pointer; transition: 0.2s; }
         .btn-primary:active { background: #c81824; transform: scale(0.98); }
+        .btn-primary:disabled { background: #ccc; cursor: not-allowed; }
 
         /* LISTA DE ITENS */
         .cart-list { background: #fff; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
@@ -133,15 +134,15 @@
                     
                     <div class="payment-options">
                         <label class="pay-label">
-                            <input type="radio" name="pay-method" value="Pix" checked onchange="toggleChange()">
+                            <input type="radio" name="pay-method" value="Pix" checked onchange="window.toggleChange()">
                             <span>Pix</span>
                         </label>
                         <label class="pay-label">
-                            <input type="radio" name="pay-method" value="Cartão" onchange="toggleChange()">
+                            <input type="radio" name="pay-method" value="Cartão" onchange="window.toggleChange()">
                             <span>Cartão (Crédito ou Débito)</span>
                         </label>
                         <label class="pay-label">
-                            <input type="radio" name="pay-method" value="Dinheiro" onchange="toggleChange()">
+                            <input type="radio" name="pay-method" value="Dinheiro" onchange="window.toggleChange()">
                             <span>Dinheiro Vivo</span>
                         </label>
                     </div>
@@ -152,34 +153,51 @@
                     </div>
                 </div>
 
-                <button class="btn-primary" onclick="finishOrder()">Confirmar e Fazer Pedido</button>
+                <button class="btn-primary" id="btn-finish" onclick="window.finishOrder()">Confirmar e Fazer Pedido</button>
             </div>
-
         </div>
 
     </main>
 
-    <script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // SUA CONFIGURAÇÃO OFICIAL
+        const firebaseConfig = {
+            apiKey: "AIzaSyBinV28T4xWvYAnE0Yed1rbsp9dEF_n7Eg",
+            authDomain: "dores-delivery.firebaseapp.com",
+            projectId: "dores-delivery",
+            storageBucket: "dores-delivery.firebasestorage.app",
+            messagingSenderId: "1029498697239",
+            appId: "1:1029498697239:web:3ebc070bbd65048bd9ce52"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
         let cart = JSON.parse(localStorage.getItem('cart')) || [];
         let finalTotal = 0;
         
-        const isLogged = localStorage.getItem('isLogged') === 'true';
-        const userEmail = localStorage.getItem('userEmail');
-        const userName = localStorage.getItem('userName') || 'Cliente';
+        // Verifica se o usuário tem sessão ativa (Criada pelo novo cadastro.html)
+        const loggedCustomer = JSON.parse(localStorage.getItem('loggedCustomer'));
+        const isLogged = !!loggedCustomer || localStorage.getItem('isLogged') === 'true'; // Compatibilidade
+        const userName = loggedCustomer ? loggedCustomer.name : (localStorage.getItem('userName') || 'Cliente');
+        const userEmail = loggedCustomer ? loggedCustomer.email : (localStorage.getItem('userEmail') || '');
 
         // Lógica de exibir/esconder input de troco
-        function toggleChange() {
+        window.toggleChange = () => {
             const method = document.querySelector('input[name="pay-method"]:checked').value;
             const changeBox = document.getElementById('change-container');
             if (method === 'Dinheiro') {
                 changeBox.style.display = 'block';
             } else {
                 changeBox.style.display = 'none';
-                document.getElementById('change-amount').value = ''; // limpa o campo
+                document.getElementById('change-amount').value = ''; 
             }
-        }
+        };
 
-        function loadCart() {
+        window.loadCart = () => {
             if (cart.length === 0) {
                 document.getElementById('empty-state').style.display = 'block';
                 document.getElementById('cart-content').style.display = 'none';
@@ -209,20 +227,17 @@
                     <div class="item-info">
                         <div class="item-name">${item.name}</div>
                         <div class="item-details">${details.join('<br>')}</div>
-                        <button class="btn-remove" onclick="removeItem('${item.id}')">Remover</button>
+                        <button class="btn-remove" onclick="window.removeItem('${item.id}')">Remover</button>
                     </div>
                     <div class="item-price">R$ ${item.price.toFixed(2)}</div>
                 </div>
                 `;
             }).join('');
 
-            // O Total agora é apenas o Subtotal (sem taxa de entrega)
             finalTotal = subtotal;
-            
             document.getElementById('subtotal-val').innerText = `R$ ${subtotal.toFixed(2)}`;
             document.getElementById('total-val').innerText = `R$ ${finalTotal.toFixed(2)}`;
 
-            // Controla a exibição do formulário ou alerta de login
             if (isLogged) {
                 document.getElementById('checkout-form').style.display = 'block';
                 document.getElementById('login-alert').style.display = 'none';
@@ -230,16 +245,15 @@
                 document.getElementById('checkout-form').style.display = 'none';
                 document.getElementById('login-alert').style.display = 'block';
             }
-        }
+        };
 
-        function removeItem(itemId) {
+        window.removeItem = (itemId) => {
             cart = cart.filter(item => item.id !== itemId);
             localStorage.setItem('cart', JSON.stringify(cart));
-            loadCart();
-        }
+            window.loadCart();
+        };
 
-        function finishOrder() {
-            // Validações do Endereço
+        window.finishOrder = async () => {
             const rua = document.getElementById('end-rua').value.trim();
             const num = document.getElementById('end-num').value.trim();
             const bairro = document.getElementById('end-bairro').value.trim();
@@ -250,7 +264,6 @@
                 return;
             }
 
-            // Captura o Método de Pagamento e o Troco (se houver)
             const payMethod = document.querySelector('input[name="pay-method"]:checked').value;
             let paymentString = payMethod;
             
@@ -264,11 +277,19 @@
             }
 
             const addressString = `${rua}, ${num} - ${bairro} ${comp ? '('+comp+')' : ''}`;
+            const btn = document.getElementById('btn-finish');
 
+            // Feedback visual para o cliente não clicar duas vezes
+            btn.innerText = "Enviando Pedido...";
+            btn.disabled = true;
+
+            // MONTA O PEDIDO
             const newOrder = {
-                id: Math.floor(Math.random() * 100000), // ID aleatório do pedido
                 date: new Date().toLocaleString('pt-BR'),
+                timestamp: Date.now(), // Para ordenação exata
+                storeId: cart[0].storeId, // É ISTO QUE FAZ CHEGAR NO PAINEL CERTO!
                 storeName: cart[0].store,
+                customerName: userName,
                 customer: {
                     name: userName,
                     email: userEmail,
@@ -277,24 +298,30 @@
                 items: cart,
                 total: finalTotal,
                 paymentMethod: paymentString,
-                status: 'Pendente' // Status inicial
+                status: 'Pendente' // Status inicial que aciona o alerta no vendedor
             };
 
-            // Salva no Banco de Dados Global de Pedidos
-            let globalOrders = JSON.parse(localStorage.getItem('globalOrders')) || [];
-            globalOrders.push(newOrder);
-            localStorage.setItem('globalOrders', JSON.stringify(globalOrders));
+            try {
+                // SALVA O PEDIDO OFICIALMENTE NAS NUVENS
+                await addDoc(collection(db, "orders"), newOrder);
 
-            // Limpa o carrinho
-            localStorage.removeItem('cart');
+                // Limpa o carrinho
+                localStorage.removeItem('cart');
 
-            alert("Pedido realizado com sucesso! A loja já recebeu a sua solicitação.");
-            
-            // Redireciona para a página de acompanhamento
-            window.location.href = "pedidos.html";
-        }
+                alert("Pedido realizado com sucesso! O restaurante já foi notificado.");
+                
+                // Redireciona para a página de acompanhamento
+                window.location.href = "pedidos.html";
 
-        window.onload = loadCart;
+            } catch (error) {
+                console.error("Erro ao finalizar pedido:", error);
+                alert("Ocorreu um erro de conexão. Tente novamente.");
+                btn.innerText = "Confirmar e Fazer Pedido";
+                btn.disabled = false;
+            }
+        };
+
+        window.onload = window.loadCart;
     </script>
 </body>
 </html>
