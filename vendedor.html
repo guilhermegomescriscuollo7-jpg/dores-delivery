@@ -414,7 +414,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, query, where, onSnapshot, doc, updateDoc, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // SUA CONFIGURAÇÃO OFICIAL FIREBASE
+        // SUA CONFIGURAÇÃO OFICIAL
         const firebaseConfig = {
             apiKey: "AIzaSyBinV28T4xWvYAnE0Yed1rbsp9dEF_n7Eg",
             authDomain: "dores-delivery.firebaseapp.com",
@@ -428,14 +428,31 @@
         const db = getFirestore(app);
 
         // ==========================================
-        // 1. INICIALIZAÇÃO E SISTEMA DE AVISOS SONOROS
+        // 1. INICIALIZAÇÃO E AVISOS SONOROS
         // ==========================================
         const loggedStore = JSON.parse(localStorage.getItem('loggedStore'));
         if (!loggedStore) { window.location.href = 'login-vendedor.html'; }
 
         document.getElementById('ui-store-name').innerText = loggedStore.name;
         document.getElementById('ui-store-logo').src = loggedStore.logo;
+        
+        window.updateStatusBtn = () => {
+            const btn = document.getElementById('btn-toggle-status');
+            if(loggedStore.status === 'Aberto') {
+                btn.className = 'store-status-toggle status-open'; btn.innerText = '🟢 Loja Aberta';
+            } else {
+                btn.className = 'store-status-toggle status-closed'; btn.innerText = '🔴 Loja Fechada';
+            }
+        };
         window.updateStatusBtn();
+
+        window.toggleStoreStatus = async () => {
+            const newStatus = loggedStore.status === 'Aberto' ? 'Fechado' : 'Aberto';
+            loggedStore.status = newStatus;
+            localStorage.setItem('loggedStore', JSON.stringify(loggedStore));
+            window.updateStatusBtn();
+            await updateDoc(doc(db, "stores", loggedStore.id), { status: newStatus });
+        };
 
         let previousOrderCount = -1;
 
@@ -443,17 +460,15 @@
             try {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
                 const ctx = new AudioContext();
-                ctx.resume().then(() => {
-                    console.log('Áudio destravado!');
-                });
+                ctx.resume().then(() => { console.log('Áudio destravado!'); });
             } catch(e) {}
 
             if ("Notification" in window) {
                 Notification.requestPermission().then(function (permission) {
                     if (permission === "granted") {
-                        alert("Notificações visuais e sonoras ativadas! Você ouvirá um toque longo quando chegar um pedido.");
+                        alert("Notificações ativadas! Você ouvirá um toque longo quando chegar um pedido.");
                     } else {
-                        alert("As notificações visuais foram bloqueadas, mas o som tentará tocar.");
+                        alert("Notificações bloqueadas, mas o som tentará tocar.");
                     }
                 });
             }
@@ -463,7 +478,6 @@
             try {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
                 const ctx = new AudioContext();
-
                 function playTone(freq, type, start, dur, vol) {
                     const osc = ctx.createOscillator();
                     const gain = ctx.createGain();
@@ -472,14 +486,11 @@
                     gain.connect(ctx.destination);
                     osc.frequency.setValueAtTime(freq, start);
                     gain.gain.setValueAtTime(vol, start);
-                    
                     gain.gain.setTargetAtTime(0.0001, start + dur, dur / 3);
                     osc.start(start);
                     osc.stop(start + dur + 0.1);
                 }
-
                 const now = ctx.currentTime;
-                
                 for (let i = 0; i < 5; i++) {
                     let offset = now + (i * 1.6); 
                     playTone(800, 'sine', offset + 0.0, 0.3, 0.8);
@@ -487,21 +498,14 @@
                     playTone(800, 'sine', offset + 0.9, 0.3, 0.8);
                     playTone(1000, 'sine', offset + 1.2, 0.5, 0.8);
                 }
-                
-            } catch (e) {
-                console.log("O som foi bloqueado pelo navegador.");
-            }
-        }
-
-        function showToastAlert() {
-            const toast = document.getElementById('new-order-toast');
-            toast.classList.add('show');
-            setTimeout(() => { toast.classList.remove('show'); }, 10000); 
+            } catch (e) { console.log("O som foi bloqueado."); }
         }
 
         function triggerNewOrderAlert() {
             playAlertSound();
-            showToastAlert();
+            const toast = document.getElementById('new-order-toast');
+            toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 10000); 
             
             if ("Notification" in window && Notification.permission === "granted") {
                 new Notification("Dores Delivery: Novo Pedido!", {
@@ -516,27 +520,7 @@
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             el.classList.add('active');
-            
             if(tabId === 'cardapio') { window.loadCategoriesAndProducts(); window.clearEditor(); }
-            if(tabId === 'relatorios') { /* Já é escutado pelo onSnapshot dos pedidos */ } 
-        };
-
-        window.toggleStoreStatus = async () => {
-            const newStatus = loggedStore.status === 'Aberto' ? 'Fechado' : 'Aberto';
-            loggedStore.status = newStatus;
-            localStorage.setItem('loggedStore', JSON.stringify(loggedStore));
-            
-            window.updateStatusBtn();
-            await updateDoc(doc(db, "stores", loggedStore.id), { status: newStatus });
-        };
-
-        window.updateStatusBtn = () => {
-            const btn = document.getElementById('btn-toggle-status');
-            if(loggedStore.status === 'Aberto') {
-                btn.className = 'store-status-toggle status-open'; btn.innerText = '🟢 Loja Aberta';
-            } else {
-                btn.className = 'store-status-toggle status-closed'; btn.innerText = '🔴 Loja Fechada';
-            }
         };
 
         window.logoutStore = () => {
@@ -547,13 +531,13 @@
         };
 
         // ==========================================
-        // 2. KANBAN DE PEDIDOS E VERIFICAÇÃO DE NOVOS (Firebase)
+        // 2. KANBAN DE PEDIDOS (TEMPO REAL FIREBASE)
         // ==========================================
         const qOrders = query(collection(db, "orders"), where("storeId", "==", loggedStore.id));
 
         onSnapshot(qOrders, (snapshot) => {
             const myOrders = [];
-            snapshot.forEach(doc => myOrders.push({ id: doc.id, ...doc.data() }));
+            snapshot.forEach(document => myOrders.push({ id: document.id, ...document.data() }));
 
             if (previousOrderCount !== -1 && myOrders.length > previousOrderCount) {
                 triggerNewOrderAlert();
@@ -613,10 +597,10 @@
         };
 
         // ==========================================
-        // 3. ALGORITMO DE RELATÓRIOS COMPLETOS
+        // 3. ALGORITMO DE RELATÓRIOS
         // ==========================================
         window.loadReports = (myOrders) => {
-            if(!myOrders) return; // Chamado a partir de onSnapshot
+            if(!myOrders) return; 
             let totalRevenue = 0; let orderCount = myOrders.length;
             let payPix = 0; let payCard = 0; let payCash = 0;
             let revHoje = 0; let revSemana = 0; let revMes = 0; let revSemestre = 0;
@@ -629,7 +613,6 @@
 
             myOrders.forEach(order => {
                 totalRevenue += order.total;
-                
                 const pm = (order.paymentMethod || '').toLowerCase();
                 if (pm.includes('pix')) payPix++; else if (pm.includes('cartão') || pm.includes('cartao')) payCard++; else if (pm.includes('dinheiro')) payCash++;
 
@@ -701,12 +684,11 @@
         };
 
         // ==========================================
-        // 4. GESTÃO DO CARDÁPIO (PRODUTOS) (Firebase)
+        // 4. GESTÃO DO CARDÁPIO (TEMPO REAL FIREBASE)
         // ==========================================
         let currentEditingId = null; let editorImageBase64 = ''; let currentPriceType = 'simples'; let editingVariants = []; let editingModifiers = []; 
         let globalProducts = [];
 
-        // Escuta os produtos em tempo real do Firebase
         const qProducts = query(collection(db, "products"), where("storeId", "==", loggedStore.id));
         onSnapshot(qProducts, (snapshot) => {
             globalProducts = [];
@@ -774,7 +756,6 @@
                 let storeCatsKey = `store_cats_${loggedStore.id}`; let myCategories = JSON.parse(localStorage.getItem(storeCatsKey)) || ['Geral', 'Destaques'];
                 myCategories = myCategories.filter(c => c !== catName); localStorage.setItem(storeCatsKey, JSON.stringify(myCategories));
                 
-                // Atualiza os produtos no Firebase para 'Geral'
                 globalProducts.forEach(async (p) => {
                     if (p.category === catName) {
                         await updateDoc(doc(db, "products", p.id), { category: 'Geral' });
