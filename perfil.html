@@ -122,7 +122,7 @@
                 </a>
             </div>
 
-            <div class="menu-list" id="install-container" style="display: none; border-color: #ea1d2c;">
+            <div class="menu-list" id="install-container" style="border-color: #ea1d2c;">
                 <a class="menu-item" id="btn-install-app" style="background: #fff5f5;">
                     <div class="menu-item-left">
                         <span class="menu-icon">📱</span> <span style="color: #ea1d2c; font-weight: bold;">Baixar App do Delivery</span>
@@ -228,31 +228,34 @@
         const db = getFirestore(app);
 
         // =====================================
-        // LÓGICA DO BOTÃO PWA (BAIXAR APP)
+        // LÓGICA DO BOTÃO PWA (BAIXAR APP) - MELHORADO
         // =====================================
         let deferredPrompt;
         const installContainer = document.getElementById('install-container');
         const btnInstallApp = document.getElementById('btn-install-app');
 
+        // Deixa o botão SEMPRE visível agora
+        installContainer.style.display = 'block';
+
         window.addEventListener('beforeinstallprompt', (e) => {
-            // Previne o aviso nativo miniatura
+            // Previne o aviso nativo miniatura e guarda o evento
             e.preventDefault();
-            // Guarda o evento para o botão
-            deferredPrompt = e;
-            // Exibe a div do botão "Baixar App"
-            installContainer.style.display = 'block';
+            deferredPrompt = e; 
         });
 
         btnInstallApp.addEventListener('click', async () => {
             if (deferredPrompt) {
-                // Abre a tela nativa de instalação do Android/iOS
+                // É Android/Chrome e está pronto para instalar magicamente
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
                 if (outcome === 'accepted') {
                     console.log('App instalado com sucesso!');
-                    installContainer.style.display = 'none'; // Esconde o botão após instalar
+                    installContainer.style.display = 'none'; // Esconde após instalar
                 }
                 deferredPrompt = null;
+            } else {
+                // É iPhone ou já está instalado
+                alert("Para instalar o App no seu celular:\n\n📱 No iPhone (Safari):\nClique no ícone de 'Compartilhar' (quadrado com seta pra cima no rodapé) e depois em 'Adicionar à Tela de Início'.\n\n🤖 No Android (se não instalou sozinho):\nClique nos 3 pontinhos do navegador e escolha 'Instalar aplicativo'.");
             }
         });
 
