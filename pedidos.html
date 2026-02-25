@@ -31,16 +31,10 @@
         .store-name { font-weight: 700; color: #111; font-size: 1.1rem; margin-bottom: 4px; display: flex; align-items: center; gap: 5px; }
         .order-date { font-size: 0.75rem; color: #999; }
         
-        /* STATUS PILLS (PÍLULAS DE STATUS) */
+        /* STATUS PILLS */
         .status-pill { padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; text-align: center; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
-        
-        /* Amarelo: Lojista ainda não viu ou não aceitou */
         .status-pendente { background: #fff3cd; color: #d97706; border: 1px solid #ffe69c; }
-        
-        /* Azul: Lojista clicou em "Aceitar Pedido" */
         .status-preparo { background: #eef4ff; color: #0d6efd; border: 1px solid #b6d4fe; }
-        
-        /* Verde: Lojista clicou em "Marcar como Entregue" */
         .status-concluido { background: #d1e7dd; color: #0f5132; border: 1px solid #a3cfbb; }
 
         .order-items { font-size: 0.9rem; color: #555; margin-bottom: 12px; line-height: 1.5; }
@@ -52,11 +46,12 @@
         .order-total { font-weight: 900; color: #111; font-size: 1.15rem; }
         .order-id { font-size: 0.75rem; color: #aaa; font-weight: bold; }
 
-        /* MENU INFERIOR GERAL COM ÍCONES VERMELHOS */
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: #fff; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #eee; z-index: 150; }
+        /* MENU INFERIOR GERAL */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; display: flex; justify-content: space-around; padding: 12px 0; padding-bottom: calc(12px + env(safe-area-inset-bottom)); border-top: 1px solid #eee; z-index: 150; box-shadow: 0 -2px 10px rgba(0,0,0,0.02); }
         .nav-link { text-align: center; color: #717171; font-size: 0.7rem; text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 4px; transition: 0.2s; }
-        .nav-icon-img { width: 24px; height: 24px; filter: invert(20%) sepia(91%) saturate(5437%) hue-rotate(352deg) brightness(94%) contrast(98%); }
+        .nav-icon-img { width: 24px; height: 24px; filter: invert(40%); }
         .nav-link.active { color: #ea1d2c; font-weight: bold; }
+        .nav-link.active .nav-icon-img { filter: invert(20%) sepia(91%) saturate(5437%) hue-rotate(352deg) brightness(94%) contrast(98%); }
     </style>
 </head>
 <body>
@@ -100,63 +95,90 @@
         </a>
     </nav>
 
-    <script>
-        const isLogged = localStorage.getItem('isLogged') === 'true';
-        const userEmail = localStorage.getItem('userEmail');
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, query, where, onSnapshot, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        function loadMyOrders() {
-            const container = document.getElementById('orders-container');
-            const unloggedState = document.getElementById('unlogged-state');
-            const emptyState = document.getElementById('empty-state');
+        // SUA CONFIGURAÇÃO OFICIAL
+        const firebaseConfig = {
+            apiKey: "AIzaSyBinV28T4xWvYAnE0Yed1rbsp9dEF_n7Eg",
+            authDomain: "dores-delivery.firebaseapp.com",
+            projectId: "dores-delivery",
+            storageBucket: "dores-delivery.firebasestorage.app",
+            messagingSenderId: "1029498697239",
+            appId: "1:1029498697239:web:3ebc070bbd65048bd9ce52"
+        };
 
-            // 1. Verifica se está logado
-            if (!isLogged) {
-                unloggedState.style.display = 'block';
-                return;
-            }
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
-            // 2. Busca todos os pedidos do Banco de Dados
-            const allOrders = JSON.parse(localStorage.getItem('globalOrders')) || [];
+        // Verifica estado do usuário
+        const loggedCustomer = JSON.parse(localStorage.getItem('loggedCustomer'));
+        const isLogged = !!loggedCustomer || localStorage.getItem('isLogged') === 'true';
+        const userEmail = loggedCustomer ? loggedCustomer.email : localStorage.getItem('userEmail');
 
-            // 3. Filtra apenas os pedidos deste cliente
-            const myOrders = allOrders.filter(o => o.customer && o.customer.email === userEmail);
+        const container = document.getElementById('orders-container');
+        const unloggedState = document.getElementById('unlogged-state');
+        const emptyState = document.getElementById('empty-state');
 
-            // 4. Se não tiver pedidos, mostra a tela vazia
-            if (myOrders.length === 0) {
-                emptyState.style.display = 'block';
-                container.innerHTML = '';
-                return;
-            }
+        if (!isLogged || !userEmail) {
+            unloggedState.style.display = 'block';
+        } else {
+            // Busca apenas os pedidos DO CLIENTE LOGADO e escuta mudanças em TEMPO REAL
+            const q = query(
+                collection(db, "orders"), 
+                where("customer.email", "==", userEmail)
+            );
 
-            // 5. Renderiza os pedidos (do mais recente para o mais antigo)
-            container.innerHTML = myOrders.reverse().map(order => {
+            onSnapshot(q, (snapshot) => {
+                const myOrders = [];
+                snapshot.forEach(doc => {
+                    myOrders.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Ordena os pedidos para mostrar o mais recente no topo
+                myOrders.sort((a, b) => b.timestamp - a.timestamp);
+
+                if (myOrders.length === 0) {
+                    emptyState.style.display = 'block';
+                    container.innerHTML = '';
+                } else {
+                    emptyState.style.display = 'none';
+                    renderOrders(myOrders);
+                }
+            });
+        }
+
+        function renderOrders(ordersArray) {
+            container.innerHTML = ordersArray.map(order => {
                 
-                // Lógica de Cores e Textos baseada no Status do Vendedor
+                // Lógica de Cores e Textos baseada no Status
                 let statusClass = 'status-pendente';
                 let statusIcon = '⏳';
                 let statusText = 'Aguardando Loja';
 
-                if (order.status === 'Em Preparo') {
+                if (order.status === 'Preparo' || order.status === 'Em Preparo') {
                     statusClass = 'status-preparo';
                     statusIcon = '👨‍🍳';
                     statusText = 'Em Preparo / Saiu p/ Entrega';
-                } else if (order.status === 'Concluído') {
+                } else if (order.status === 'Concluido' || order.status === 'Concluído') {
                     statusClass = 'status-concluido';
                     statusIcon = '✅';
                     statusText = 'Pedido Entregue';
                 }
 
-                // Resumo dos itens comprados
-                const itemsSummary = order.items.map(i => `<b>${i.qty}x</b> ${i.name}`).join('<br>');
+                // Resumo dos itens
+                const itemsSummary = order.items ? order.items.map(i => `<b>${i.qty}x</b> ${i.name}`).join('<br>') : 'Itens indisponíveis';
                 
                 // Forma de pagamento
                 const paymentMethod = order.paymentMethod || 'Não informado';
+                const shortId = order.id.substring(0, 6).toUpperCase(); // Cria um ID curto bonito
 
                 return `
                 <div class="order-card">
                     <div class="order-header">
                         <div class="store-info">
-                            <span class="store-name">🏪 ${order.storeName}</span>
+                            <span class="store-name">🏪 ${order.storeName || 'Loja Parceira'}</span>
                             <span class="order-date">${order.date}</span>
                         </div>
                         <div class="status-pill ${statusClass}">
@@ -173,24 +195,13 @@
                     </div>
 
                     <div class="order-footer">
-                        <span class="order-total">R$ ${order.total.toFixed(2)}</span>
-                        <span class="order-id">Pedido #${order.id}</span>
+                        <span class="order-total">R$ ${(order.total || 0).toFixed(2)}</span>
+                        <span class="order-id">Pedido #${shortId}</span>
                     </div>
                 </div>
                 `;
             }).join('');
         }
-
-        // Carrega imediatamente ao abrir a página
-        window.onload = () => {
-            loadMyOrders();
-            
-            // ATUALIZAÇÃO AUTOMÁTICA (Mágica em Tempo Real)
-            // A cada 3 segundos, o aplicativo verifica se o lojista mudou o status
-            if (isLogged) {
-                setInterval(loadMyOrders, 3000);
-            }
-        };
     </script>
 </body>
 </html>
