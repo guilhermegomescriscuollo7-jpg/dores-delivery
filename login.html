@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrar - Dores Delivery</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', sans-serif; }
+        body { background-color: #f8f8f8; color: #333; height: 100vh; display: flex; flex-direction: column; }
+
+        /* HEADER SIMPLES */
+        header { padding: 20px; text-align: left; }
+        .back-btn { font-size: 1.8rem; color: #111; text-decoration: none; font-weight: 300; }
+
+        .container { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 0 20px 40px; max-width: 400px; margin: 0 auto; width: 100%; }
+
+        .header-text { margin-bottom: 30px; text-align: center; }
+        .header-text h1 { font-size: 1.8rem; color: #111; margin-bottom: 5px; }
+        .header-text p { font-size: 0.95rem; color: #717171; }
+
+        /* MENSAGENS DE ERRO/SUCESSO */
+        .alert-box { display: none; padding: 12px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 20px; text-align: center; font-weight: 500; }
+        .alert-error { background: #fef0f0; color: #ea1d2c; border: 1px solid #fbd5d5; }
+        .alert-success { background: #e6f4ea; color: #00a14b; border: 1px solid #c3e6cb; }
+
+        /* FORMULÁRIOS */
+        .form-group { margin-bottom: 15px; }
+        .form-group input { width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; outline: none; transition: border 0.2s; background: #fff; }
+        .form-group input:focus { border-color: #ea1d2c; }
+
+        .btn-primary { width: 100%; padding: 16px; background-color: #ea1d2c; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.2s; margin-top: 10px; }
+        .btn-primary:hover { background-color: #c81824; }
+
+        .toggle-link { text-align: center; margin-top: 25px; font-size: 0.9rem; color: #717171; }
+        .toggle-link a { color: #ea1d2c; text-decoration: none; font-weight: bold; cursor: pointer; }
+
+        /* Oculta o formulário de cadastro inicialmente */
+        #register-form { display: none; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="javascript:history.back()" class="back-btn">←</a>
+    </header>
+
+    <div class="container">
+        
+        <div class="header-text">
+            <span style="font-size: 3rem; display: block; margin-bottom: 10px;">🍔</span>
+            <h1 id="page-title">Falta pouco!</h1>
+            <p id="page-subtitle">Entre com a sua conta para pedir.</p>
+        </div>
+
+        <div id="alertBox" class="alert-box"></div>
+
+        <form id="login-form">
+            <div class="form-group">
+                <input type="email" id="login-email" placeholder="Seu e-mail" required>
+            </div>
+            <div class="form-group">
+                <input type="password" id="login-pass" placeholder="Sua senha" required>
+            </div>
+            <button type="submit" class="btn-primary">Entrar</button>
+            
+            <div class="toggle-link">
+                Ainda não tem conta? <a onclick="toggleMode('register')">Criar conta</a>
+            </div>
+        </form>
+
+        <form id="register-form">
+            <div class="form-group">
+                <input type="text" id="reg-name" placeholder="Nome completo" required>
+            </div>
+            <div class="form-group">
+                <input type="email" id="reg-email" placeholder="E-mail" required>
+            </div>
+            <div class="form-group">
+                <input type="tel" id="reg-phone" placeholder="Celular / WhatsApp" required>
+            </div>
+            <div class="form-group">
+                <input type="password" id="reg-pass" placeholder="Crie uma senha" required>
+            </div>
+            <button type="submit" class="btn-primary">Criar minha conta</button>
+            
+            <div class="toggle-link">
+                Já tem uma conta? <a onclick="toggleMode('login')">Fazer Login</a>
+            </div>
+        </form>
+
+    </div>
+
+    <script>
+        // BANCO DE DADOS DE CLIENTES
+        let globalUsers = JSON.parse(localStorage.getItem('globalUsers')) || [];
+
+        const alertBox = document.getElementById('alertBox');
+
+        function showAlert(msg, isError = true) {
+            alertBox.innerText = msg;
+            alertBox.className = isError ? 'alert-box alert-error' : 'alert-box alert-success';
+            alertBox.style.display = 'block';
+            setTimeout(() => { alertBox.style.display = 'none'; }, 4000);
+        }
+
+        // ALTERNA ENTRE LOGIN E CADASTRO
+        function toggleMode(mode) {
+            alertBox.style.display = 'none';
+            if (mode === 'register') {
+                document.getElementById('login-form').style.display = 'none';
+                document.getElementById('register-form').style.display = 'block';
+                document.getElementById('page-title').innerText = 'Criar Conta';
+                document.getElementById('page-subtitle').innerText = 'Preencha os dados para fazer pedidos.';
+            } else {
+                document.getElementById('register-form').style.display = 'none';
+                document.getElementById('login-form').style.display = 'block';
+                document.getElementById('page-title').innerText = 'Falta pouco!';
+                document.getElementById('page-subtitle').innerText = 'Entre com a sua conta para pedir.';
+            }
+        }
+
+        // DIRECIONAMENTO INTELIGENTE (Se tiver item no carrinho, volta pro carrinho)
+        function redirectAfterAuth() {
+            const cart = JSON.parse(localStorage.getItem('cart')) || [];
+            if (cart.length > 0) {
+                window.location.href = 'carrinho.html';
+            } else {
+                window.location.href = 'index.html';
+            }
+        }
+
+        // LÓGICA DE LOGIN
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value.trim();
+            const pass = document.getElementById('login-pass').value.trim();
+
+            const user = globalUsers.find(u => u.email === email && u.password === pass);
+
+            if (user) {
+                localStorage.setItem('isLogged', 'true');
+                localStorage.setItem('userEmail', user.email);
+                localStorage.setItem('userName', user.name);
+                redirectAfterAuth();
+            } else {
+                showAlert("E-mail ou senha incorretos. Tente novamente.");
+                document.getElementById('login-pass').value = '';
+            }
+        });
+
+        // LÓGICA DE CADASTRO
+        document.getElementById('register-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = document.getElementById('reg-name').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const phone = document.getElementById('reg-phone').value.trim();
+            const pass = document.getElementById('reg-pass').value.trim();
+
+            // Verifica se o e-mail já existe
+            const userExists = globalUsers.find(u => u.email === email);
+            if (userExists) {
+                showAlert("Este e-mail já está cadastrado. Faça login.");
+                return;
+            }
+
+            // Salva o novo usuário
+            const newUser = { id: Date.now(), name, email, phone, password: pass };
+            globalUsers.push(newUser);
+            localStorage.setItem('globalUsers', JSON.stringify(globalUsers));
+
+            // Já faz o login automaticamente após o cadastro
+            localStorage.setItem('isLogged', 'true');
+            localStorage.setItem('userEmail', email);
+            localStorage.setItem('userName', name);
+            
+            showAlert("Conta criada com sucesso!", false);
+            setTimeout(() => { redirectAfterAuth(); }, 1000);
+        });
+    </script>
+</body>
+</html>

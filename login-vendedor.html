@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login da Loja - Dores Delivery</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', sans-serif; }
+        body { background-color: #f4f5f7; display: flex; align-items: center; justify-content: center; height: 100vh; color: #333; }
+
+        .login-box { background: #fff; padding: 40px 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); width: 100%; max-width: 400px; text-align: center; }
+        
+        .logo-area { margin-bottom: 25px; }
+        .logo-area svg { width: 50px; height: auto; transform: rotate(-10deg); margin-bottom: 10px; }
+        .logo-area h1 { font-size: 1.5rem; color: #111; font-weight: 700; }
+        .logo-area p { font-size: 0.9rem; color: #777; margin-top: 5px; }
+
+        .alert-box { display: none; padding: 12px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 20px; font-weight: bold; }
+        .alert-error { background: #fef0f0; color: #ea1d2c; border: 1px solid #fbd5d5; }
+        .alert-success { background: #e6f4ea; color: #00a14b; border: 1px solid #c3e6cb; }
+
+        .form-group { margin-bottom: 15px; text-align: left; }
+        .form-group label { display: block; font-size: 0.85rem; color: #555; font-weight: 500; margin-bottom: 6px; }
+        .form-group input { width: 100%; padding: 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; outline: none; background: #f9f9f9; transition: 0.2s; }
+        .form-group input:focus { border-color: #ea1d2c; background: #fff; }
+
+        .btn-primary { width: 100%; background: #ea1d2c; color: #fff; border: none; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.2s; margin-top: 10px; }
+        .btn-primary:hover { background: #c81824; }
+        .btn-primary:active { transform: scale(0.98); }
+
+        .back-link { display: block; margin-top: 25px; font-size: 0.85rem; color: #777; text-decoration: none; }
+        .back-link:hover { color: #111; text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <div class="login-box">
+        <div class="logo-area">
+            <svg viewBox="0 0 100 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5 15 Q 50 55 95 15" stroke="#ea1d2c" stroke-width="8" stroke-linecap="round"/>
+            </svg>
+            <h1>Painel da Loja</h1>
+            <p>Faça login para gerir os seus pedidos.</p>
+        </div>
+
+        <div id="alert-msg" class="alert-box"></div>
+
+        <div>
+            <div class="form-group">
+                <label>E-mail da Loja</label>
+                <input type="email" id="email" placeholder="Digite o e-mail cadastrado" required>
+            </div>
+            <div class="form-group">
+                <label>Senha</label>
+                <input type="password" id="pass" placeholder="Sua senha" required>
+            </div>
+            
+            <button type="button" class="btn-primary" onclick="fazerLogin()">Entrar no Painel</button>
+        </div>
+
+        <a href="index.html" class="back-link">← Voltar para o aplicativo do cliente</a>
+    </div>
+
+    <script>
+        function showAlert(msg, type) {
+            const alertBox = document.getElementById('alert-msg');
+            alertBox.innerText = msg;
+            alertBox.className = type === 'error' ? 'alert-box alert-error' : 'alert-box alert-success';
+            alertBox.style.display = 'block';
+            if(type === 'error') {
+                setTimeout(() => { alertBox.style.display = 'none'; }, 4000);
+            }
+        }
+
+        function fazerLogin() {
+            const email = document.getElementById('email').value.trim();
+            const pass = document.getElementById('pass').value.trim();
+
+            if (!email || !pass) {
+                showAlert("❌ Preencha todos os campos.", "error");
+                return;
+            }
+
+            const allStores = JSON.parse(localStorage.getItem('registeredStores')) || [];
+            const store = allStores.find(s => s.email === email && s.password === pass);
+
+            if (store) {
+                if (store.isActive === false) {
+                    showAlert("⚠️ Sua loja foi suspensa. Entre em contato com a administração.", "error");
+                    return;
+                }
+
+                // Salva os dados na sessão
+                localStorage.setItem('loggedStore', JSON.stringify(store));
+                
+                // Mostra mensagem de sucesso e força o redirecionamento
+                showAlert("✅ Login efetuado! Redirecionando...", "success");
+                
+                setTimeout(() => {
+                    window.location.href = "vendedor.html";
+                }, 500); // Dá meio segundo para a mensagem aparecer e então redireciona
+                
+            } else {
+                showAlert("❌ E-mail ou senha incorretos.", "error");
+                document.getElementById('pass').value = '';
+            }
+        }
+
+        // Permite apertar a tecla "Enter" no teclado para fazer login
+        document.getElementById('pass').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                fazerLogin();
+            }
+        });
+    </script>
+</body>
+</html>

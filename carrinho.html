@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrinho - Dores Delivery</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', sans-serif; }
+        body { background-color: #f8f8f8; color: #3e3e3e; padding-bottom: 90px; }
+
+        /* HEADER */
+        header { background: #fff; padding: 20px; text-align: center; border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: center; }
+        .back-btn { position: absolute; left: 20px; font-size: 1.5rem; color: #ea1d2c; text-decoration: none; font-weight: bold; }
+        header h1 { font-size: 1.2rem; font-weight: 700; color: #111; }
+
+        .container { padding: 15px; }
+
+        /* ESTADO VAZIO */
+        .empty-cart { text-align: center; padding: 60px 20px; display: none; }
+        .empty-cart span { font-size: 3rem; display: block; margin-bottom: 15px; }
+        .empty-cart h3 { color: #111; margin-bottom: 10px; font-size: 1.2rem; }
+        .empty-cart p { color: #717171; margin-bottom: 20px; font-size: 0.95rem; }
+        .btn-primary { background: #ea1d2c; color: #fff; border: none; padding: 14px 20px; border-radius: 8px; font-weight: bold; font-size: 1rem; width: 100%; text-align: center; display: inline-block; text-decoration: none; cursor: pointer; transition: 0.2s; }
+        .btn-primary:active { background: #c81824; transform: scale(0.98); }
+
+        /* LISTA DE ITENS */
+        .cart-list { background: #fff; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+        .store-header { font-weight: 700; color: #111; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+        .cart-item { display: flex; justify-content: space-between; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed #eee; }
+        .cart-item:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+        
+        .item-qty { font-weight: bold; color: #ea1d2c; margin-right: 10px; }
+        .item-info { flex-grow: 1; }
+        .item-name { font-weight: 500; color: #333; margin-bottom: 3px; }
+        .item-details { font-size: 0.8rem; color: #777; line-height: 1.4; }
+        .item-price { font-weight: bold; color: #111; margin-left: 10px; }
+        .btn-remove { background: none; border: none; color: #ea1d2c; font-size: 0.8rem; cursor: pointer; margin-top: 5px; font-weight: 500; }
+
+        /* RESUMO DE VALORES */
+        .summary-card { background: #fff; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+        .summary-line { display: flex; justify-content: space-between; font-size: 0.95rem; color: #555; margin-bottom: 10px; }
+        .summary-total { display: flex; justify-content: space-between; font-size: 1.1rem; color: #111; font-weight: 700; margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee; }
+
+        /* FORMS (ENDEREÇO E PAGAMENTO) */
+        .checkout-section { background: #fff; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+        .checkout-section h3 { font-size: 1rem; color: #111; margin-bottom: 15px; display: flex; align-items: center; gap: 6px; }
+        
+        .form-group { margin-bottom: 12px; }
+        .form-group input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95rem; outline: none; background: #f9f9f9; }
+        .form-group input:focus { border-color: #ea1d2c; background: #fff; }
+        
+        .row { display: flex; gap: 10px; }
+        .row .form-group { flex: 1; }
+
+        /* OPÇÕES DE PAGAMENTO */
+        .payment-options { display: flex; flex-direction: column; gap: 10px; }
+        .pay-label { display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; transition: 0.2s; background: #f9f9f9; }
+        .pay-label:hover { background: #fff; }
+        .pay-label input[type="radio"] { accent-color: #ea1d2c; transform: scale(1.2); }
+        
+        /* Input de Troco (Escondido por padrão) */
+        #change-container { display: none; margin-top: 10px; padding: 15px; background: #fef0f0; border: 1px dashed #fbd5d5; border-radius: 8px; }
+        #change-container label { font-size: 0.85rem; color: #ea1d2c; font-weight: bold; display: block; margin-bottom: 8px; }
+
+        /* LOGIN ALERT */
+        .login-alert { background: #fff3cd; color: #856404; padding: 15px; border-radius: 8px; border: 1px solid #ffeeba; text-align: center; margin-bottom: 15px; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="index.html" class="back-btn">‹</a>
+        <h1>Carrinho</h1>
+    </header>
+
+    <main class="container">
+        
+        <div id="empty-state" class="empty-cart">
+            <span>🛒</span>
+            <h3>Sua sacola está vazia</h3>
+            <p>Adicione itens de uma loja para poder finalizar seu pedido.</p>
+            <a href="index.html" class="btn-primary">Ver Lojas</a>
+        </div>
+
+        <div id="cart-content" style="display: none;">
+            
+            <div class="cart-list">
+                <div class="store-header">🏪 <span id="cart-store-name">Nome da Loja</span></div>
+                <div id="cart-items-container">
+                    </div>
+            </div>
+
+            <div class="summary-card">
+                <div class="summary-line">
+                    <span>Subtotal</span>
+                    <span id="subtotal-val">R$ 0,00</span>
+                </div>
+                <div class="summary-total">
+                    <span>Total</span>
+                    <span id="total-val">R$ 0,00</span>
+                </div>
+            </div>
+
+            <div id="login-alert" class="login-alert" style="display: none;">
+                Você precisa estar logado para finalizar o pedido.<br><br>
+                <button class="btn-primary" style="padding: 10px; font-size: 0.9rem;" onclick="window.location.href='login.html'">Fazer Login ou Criar Conta</button>
+            </div>
+
+            <div id="checkout-form" style="display: none;">
+                
+                <div class="checkout-section">
+                    <h3>📍 Endereço de Entrega</h3>
+                    <div class="form-group">
+                        <input type="text" id="end-rua" placeholder="Rua / Avenida" required>
+                    </div>
+                    <div class="row">
+                        <div class="form-group" style="flex: 0.4;">
+                            <input type="text" id="end-num" placeholder="Número" required>
+                        </div>
+                        <div class="form-group" style="flex: 0.6;">
+                            <input type="text" id="end-bairro" placeholder="Bairro" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="end-comp" placeholder="Complemento (Opcional)">
+                    </div>
+                </div>
+
+                <div class="checkout-section">
+                    <h3>💳 Pagamento na Entrega</h3>
+                    <p style="font-size: 0.8rem; color: #777; margin-bottom: 12px;">Como você prefere pagar quando o entregador chegar?</p>
+                    
+                    <div class="payment-options">
+                        <label class="pay-label">
+                            <input type="radio" name="pay-method" value="Pix" checked onchange="toggleChange()">
+                            <span>Pix</span>
+                        </label>
+                        <label class="pay-label">
+                            <input type="radio" name="pay-method" value="Cartão" onchange="toggleChange()">
+                            <span>Cartão (Crédito ou Débito)</span>
+                        </label>
+                        <label class="pay-label">
+                            <input type="radio" name="pay-method" value="Dinheiro" onchange="toggleChange()">
+                            <span>Dinheiro Vivo</span>
+                        </label>
+                    </div>
+
+                    <div id="change-container">
+                        <label>Vai precisar de troco para qual nota?</label>
+                        <input type="number" id="change-amount" placeholder="Ex: 50 (Deixe em branco se tiver o valor trocado)">
+                    </div>
+                </div>
+
+                <button class="btn-primary" onclick="finishOrder()">Confirmar e Fazer Pedido</button>
+            </div>
+
+        </div>
+
+    </main>
+
+    <script>
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+        let finalTotal = 0;
+        
+        const isLogged = localStorage.getItem('isLogged') === 'true';
+        const userEmail = localStorage.getItem('userEmail');
+        const userName = localStorage.getItem('userName') || 'Cliente';
+
+        // Lógica de exibir/esconder input de troco
+        function toggleChange() {
+            const method = document.querySelector('input[name="pay-method"]:checked').value;
+            const changeBox = document.getElementById('change-container');
+            if (method === 'Dinheiro') {
+                changeBox.style.display = 'block';
+            } else {
+                changeBox.style.display = 'none';
+                document.getElementById('change-amount').value = ''; // limpa o campo
+            }
+        }
+
+        function loadCart() {
+            if (cart.length === 0) {
+                document.getElementById('empty-state').style.display = 'block';
+                document.getElementById('cart-content').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('empty-state').style.display = 'none';
+            document.getElementById('cart-content').style.display = 'block';
+
+            // Pega o nome da loja baseada no primeiro item do carrinho
+            document.getElementById('cart-store-name').innerText = cart[0].store;
+
+            let subtotal = 0;
+            const container = document.getElementById('cart-items-container');
+            
+            container.innerHTML = cart.map(item => {
+                subtotal += item.price;
+                
+                let details = [];
+                if(item.variant) details.push(item.variant);
+                if(item.addons && item.addons.length > 0) details.push(item.addons.join(', '));
+                if(item.observation) details.push(`<em>Obs: ${item.observation}</em>`);
+                
+                return `
+                <div class="cart-item">
+                    <div class="item-qty">${item.qty}x</div>
+                    <div class="item-info">
+                        <div class="item-name">${item.name}</div>
+                        <div class="item-details">${details.join('<br>')}</div>
+                        <button class="btn-remove" onclick="removeItem('${item.id}')">Remover</button>
+                    </div>
+                    <div class="item-price">R$ ${item.price.toFixed(2)}</div>
+                </div>
+                `;
+            }).join('');
+
+            // O Total agora é apenas o Subtotal (sem taxa de entrega)
+            finalTotal = subtotal;
+            
+            document.getElementById('subtotal-val').innerText = `R$ ${subtotal.toFixed(2)}`;
+            document.getElementById('total-val').innerText = `R$ ${finalTotal.toFixed(2)}`;
+
+            // Controla a exibição do formulário ou alerta de login
+            if (isLogged) {
+                document.getElementById('checkout-form').style.display = 'block';
+                document.getElementById('login-alert').style.display = 'none';
+            } else {
+                document.getElementById('checkout-form').style.display = 'none';
+                document.getElementById('login-alert').style.display = 'block';
+            }
+        }
+
+        function removeItem(itemId) {
+            cart = cart.filter(item => item.id !== itemId);
+            localStorage.setItem('cart', JSON.stringify(cart));
+            loadCart();
+        }
+
+        function finishOrder() {
+            // Validações do Endereço
+            const rua = document.getElementById('end-rua').value.trim();
+            const num = document.getElementById('end-num').value.trim();
+            const bairro = document.getElementById('end-bairro').value.trim();
+            const comp = document.getElementById('end-comp').value.trim();
+
+            if(!rua || !num || !bairro) {
+                alert("Por favor, preencha a Rua, Número e Bairro para entrega.");
+                return;
+            }
+
+            // Captura o Método de Pagamento e o Troco (se houver)
+            const payMethod = document.querySelector('input[name="pay-method"]:checked').value;
+            let paymentString = payMethod;
+            
+            if (payMethod === 'Dinheiro') {
+                const changeAmount = document.getElementById('change-amount').value.trim();
+                if (changeAmount) {
+                    paymentString = `Dinheiro (Troco para R$ ${changeAmount})`;
+                } else {
+                    paymentString = `Dinheiro (Sem troco / Valor exato)`;
+                }
+            }
+
+            const addressString = `${rua}, ${num} - ${bairro} ${comp ? '('+comp+')' : ''}`;
+
+            const newOrder = {
+                id: Math.floor(Math.random() * 100000), // ID aleatório do pedido
+                date: new Date().toLocaleString('pt-BR'),
+                storeName: cart[0].store,
+                customer: {
+                    name: userName,
+                    email: userEmail,
+                    address: addressString
+                },
+                items: cart,
+                total: finalTotal,
+                paymentMethod: paymentString,
+                status: 'Pendente' // Status inicial
+            };
+
+            // Salva no Banco de Dados Global de Pedidos
+            let globalOrders = JSON.parse(localStorage.getItem('globalOrders')) || [];
+            globalOrders.push(newOrder);
+            localStorage.setItem('globalOrders', JSON.stringify(globalOrders));
+
+            // Limpa o carrinho
+            localStorage.removeItem('cart');
+
+            alert("Pedido realizado com sucesso! A loja já recebeu a sua solicitação.");
+            
+            // Redireciona para a página de acompanhamento
+            window.location.href = "pedidos.html";
+        }
+
+        window.onload = loadCart;
+    </script>
+</body>
+</html>
