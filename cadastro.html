@@ -12,7 +12,7 @@
         .back-nav { margin-bottom: 20px; font-size: 1.5rem; cursor: pointer; color: #ea1d2c; width: fit-content; }
 
         .header { margin-bottom: 30px; }
-        .header h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 10px; }
+        .header h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 10px; color: #111; }
         .header p { font-size: 0.9rem; color: #717171; }
 
         .input-group { margin-bottom: 15px; }
@@ -36,7 +36,7 @@
         .input-group input:focus { border-color: #ea1d2c; }
 
         /* Estilo para Mensagens de Erro */
-        .error-msg { color: #ea1d2c; font-size: 0.7rem; margin-top: 5px; display: none; }
+        .error-msg { color: #ea1d2c; font-size: 0.75rem; margin-top: 5px; display: none; font-weight: 500;}
         input.invalid { border-color: #ea1d2c; }
 
         .btn-register {
@@ -50,7 +50,10 @@
             font-weight: bold;
             cursor: pointer;
             margin-top: 20px;
+            transition: background 0.3s;
         }
+        .btn-register:active { background-color: #c81824; transform: scale(0.98); }
+        .btn-register:disabled { background-color: #ccc; cursor: not-allowed; }
 
         .terms {
             margin-top: 20px;
@@ -59,7 +62,7 @@
             text-align: center;
             line-height: 1.4;
         }
-        .terms a { color: #ea1d2c; text-decoration: none; }
+        .terms a { color: #ea1d2c; text-decoration: none; font-weight: bold;}
     </style>
 </head>
 <body>
@@ -96,7 +99,7 @@
             <span class="error-msg" id="passError">A senha deve ter pelo menos 6 dígitos.</span>
         </div>
 
-        <button type="submit" class="btn-register">Criar conta</button>
+        <button type="submit" class="btn-register" id="btnSubmit">Criar conta</button>
     </form>
 
     <p class="terms">
@@ -104,37 +107,81 @@
         <a href="#">Termos de Uso</a> e <a href="#">Política de Privacidade</a>.
     </p>
 
-    <script>
-        const form = document.getElementById('registerForm');
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        form.addEventListener('submit', (e) => {
+        // SUA CONFIGURAÇÃO OFICIAL FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyBinV28T4xWvYAnE0Yed1rbsp9dEF_n7Eg",
+            authDomain: "dores-delivery.firebaseapp.com",
+            projectId: "dores-delivery",
+            storageBucket: "dores-delivery.firebasestorage.app",
+            messagingSenderId: "1029498697239",
+            appId: "1:1029498697239:web:3ebc070bbd65048bd9ce52"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const form = document.getElementById('registerForm');
+        const btnSubmit = document.getElementById('btnSubmit');
+
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
             let isValid = true;
 
-            // Validação simples de Nome
             const name = document.getElementById('regName');
-            if (name.value.trim().length < 3) {
-                showError(name, 'nameError');
-                isValid = false;
-            } else { hideError(name, 'nameError'); }
-
-            // Validação de E-mail
             const email = document.getElementById('regEmail');
-            if (!email.value.includes('@')) {
-                showError(email, 'emailError');
-                isValid = false;
-            } else { hideError(email, 'emailError'); }
-
-            // Validação de Senha
+            const phone = document.getElementById('regPhone');
             const pass = document.getElementById('regPass');
-            if (pass.value.length < 6) {
-                showError(pass, 'passError');
-                isValid = false;
-            } else { hideError(pass, 'passError'); }
 
-            if (isValid) {
-                alert("Conta criada com sucesso!");
-                window.location.href = "login.html";
+            // Validações
+            if (name.value.trim().length < 3) { showError(name, 'nameError'); isValid = false; } else { hideError(name, 'nameError'); }
+            if (!email.value.includes('@') || !email.value.includes('.')) { showError(email, 'emailError'); isValid = false; } else { hideError(email, 'emailError'); }
+            if (phone.value.trim().length < 8) { showError(phone, 'phoneError'); isValid = false; } else { hideError(phone, 'phoneError'); }
+            if (pass.value.length < 6) { showError(pass, 'passError'); isValid = false; } else { hideError(pass, 'passError'); }
+
+            if (!isValid) return;
+
+            // Bloqueia o botão para evitar cliques duplos
+            btnSubmit.disabled = true;
+            btnSubmit.innerText = "Criando conta...";
+
+            try {
+                // 1. Verifica se o e-mail já existe no banco
+                const q = query(collection(db, "customers"), where("email", "==", email.value.trim()));
+                const querySnapshot = await getDocs(q);
+
+                if (!querySnapshot.empty) {
+                    alert("Este e-mail já está cadastrado. Por favor, faça login.");
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerText = "Criar conta";
+                    return;
+                }
+
+                // 2. Salva o novo cliente no Firebase
+                const newCustomer = {
+                    name: name.value.trim(),
+                    email: email.value.trim(),
+                    phone: phone.value.trim(),
+                    password: pass.value.trim(), // Nota: Num ambiente 100% de produção usaríamos o Firebase Auth para senhas criptografadas.
+                    createdAt: new Date().toISOString()
+                };
+
+                await addDoc(collection(db, "customers"), newCustomer);
+                
+                // 3. Salva no aparelho do usuário que ele já tem uma conta local (para auto-login)
+                localStorage.setItem('loggedCustomer', JSON.stringify({ name: newCustomer.name, email: newCustomer.email, phone: newCustomer.phone }));
+
+                alert("Conta criada com sucesso! Bem-vindo ao Dores Delivery.");
+                window.location.href = "index.html"; // Redireciona para o app principal
+
+            } catch (error) {
+                console.error("Erro ao cadastrar:", error);
+                alert("Erro ao conectar com o servidor. Tente novamente.");
+                btnSubmit.disabled = false;
+                btnSubmit.innerText = "Criar conta";
             }
         });
 
