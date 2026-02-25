@@ -30,10 +30,9 @@
         
         .item-list { margin-top: 20px; display: grid; grid-template-columns: 1fr; gap: 15px; }
         .card-item { border: 1px solid #eee; padding: 15px; border-radius: 8px; display: flex; align-items: center; gap: 15px; background: #fff; }
-        .card-item.suspended { background: #fff0f0; border-color: #fbd5d5; } /* Estilo para loja suspensa */
+        .card-item.suspended { background: #fff0f0; border-color: #fbd5d5; } 
         .card-img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; background: #eee; border: 2px solid #ddd; }
         
-        /* Botões de ação na lista */
         .actions-col { display: flex; gap: 15px; margin-left: auto; align-items: center; }
         .btn-edit { color: #0d6efd; border: none; background: none; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
         .btn-suspend { color: #ea1d2c; border: none; background: none; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
@@ -51,8 +50,8 @@
     <aside class="sidebar">
         <div class="sidebar-header">⚙️ Admin Dores</div>
         <ul class="nav-menu">
-            <li class="nav-item active" onclick="switchTab('lojas', this)">🏪 Lojas Parceiras</li>
-            <li class="nav-item" onclick="switchTab('banners', this)">🖼️ Banners Home</li>
+            <li class="nav-item active" onclick="window.switchTab('lojas', this)">🏪 Lojas Parceiras</li>
+            <li class="nav-item" onclick="window.switchTab('banners', this)">🖼️ Banners Home</li>
         </ul>
     </aside>
 
@@ -88,8 +87,8 @@
                 <input type="file" id="s-logo" accept="image/*">
             </div>
             
-            <button class="btn" id="btn-save-store" onclick="saveStore()">Registrar Loja</button>
-            <button class="btn-secondary" id="btn-cancel-edit" onclick="cancelEdit()">Cancelar Edição</button>
+            <button class="btn" id="btn-save-store" onclick="window.saveStore()">Registrar Loja</button>
+            <button class="btn-secondary" id="btn-cancel-edit" onclick="window.cancelEdit()">Cancelar Edição</button>
             
             <h3 style="margin-top: 40px; font-size: 1rem; border-bottom: 1px solid #eee; padding-bottom: 10px;">Lojas Cadastradas (Gerenciar Assinaturas)</h3>
             <div class="item-list" id="store-list-container"></div>
@@ -103,31 +102,48 @@
                 <label>Imagem do Banner</label>
                 <input type="file" id="b-image" accept="image/*">
             </div>
-            <button class="btn" onclick="saveBanner()">Adicionar ao Carrossel</button>
+            <button class="btn" onclick="window.saveBanner()">Adicionar ao Carrossel</button>
 
             <h3 style="margin-top: 30px; font-size: 1rem;">Banners Ativos</h3>
             <div class="item-list" id="banner-list-container" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));"></div>
         </section>
     </main>
 
-    <script>
-        let globalBanners = JSON.parse(localStorage.getItem('globalBanners')) || [];
-        let allStores = JSON.parse(localStorage.getItem('registeredStores')) || [];
-        
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // SUA CONFIGURAÇÃO OFICIAL FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyBinV28T4xWvYAnE0Yed1rbsp9dEF_n7Eg",
+            authDomain: "dores-delivery.firebaseapp.com",
+            projectId: "dores-delivery",
+            storageBucket: "dores-delivery.firebasestorage.app",
+            messagingSenderId: "1029498697239",
+            appId: "1:1029498697239:web:3ebc070bbd65048bd9ce52"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // VARIÁVEIS DE ESTADO
+        let allStores = [];
+        let globalBanners = [];
         let storeImgBase64 = '';
         let bannerImgBase64 = '';
         let editingStoreId = null;
 
-        function switchTab(tabId, el) {
+        // --- SISTEMA DE ABAS ---
+        window.switchTab = (tabId, el) => {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             el.classList.add('active');
-            if(tabId === 'banners') renderBanners();
-            if(tabId === 'lojas') renderStoreList();
-        }
+        };
 
-        // BANNERS
+        // ==========================================
+        // MÓDULO BANNERS
+        // ==========================================
         document.getElementById('b-image').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
@@ -137,35 +153,40 @@
             }
         });
 
-        function saveBanner() {
+        // Carrega Banners em Tempo Real
+        onSnapshot(collection(db, "banners"), (snapshot) => {
+            globalBanners = [];
+            snapshot.forEach(doc => globalBanners.push({ id: doc.id, ...doc.data() }));
+            renderBanners();
+        });
+
+        window.saveBanner = async () => {
             if(!bannerImgBase64) return alert("Selecione uma imagem!");
-            const newBanner = { id: Date.now(), image: bannerImgBase64 };
-            globalBanners.push(newBanner);
-            localStorage.setItem('globalBanners', JSON.stringify(globalBanners));
+            await addDoc(collection(db, "banners"), { image: bannerImgBase64 });
             bannerImgBase64 = '';
             document.getElementById('b-image').value = '';
-            renderBanners();
-        }
+            alert("Banner adicionado com sucesso!");
+        };
 
         function renderBanners() {
             const container = document.getElementById('banner-list-container');
             container.innerHTML = globalBanners.map(b => `
                 <div class="card-item" style="flex-direction:column; align-items:flex-start;">
                     <img src="${b.image}" style="width:100%; height:80px; object-fit:cover; border-radius:6px;">
-                    <button class="btn-del" onclick="deleteBanner(${b.id})" style="margin-left:0; margin-top:10px;">Excluir Banner</button>
+                    <button class="btn-del" onclick="window.deleteBanner('${b.id}')" style="margin-left:0; margin-top:10px;">Excluir Banner</button>
                 </div>
             `).join('');
         }
 
-        function deleteBanner(id) {
+        window.deleteBanner = async (id) => {
             if(confirm("Remover este banner do aplicativo?")) {
-                globalBanners = globalBanners.filter(b => b.id !== id);
-                localStorage.setItem('globalBanners', JSON.stringify(globalBanners));
-                renderBanners();
+                await deleteDoc(doc(db, "banners", id));
             }
-        }
+        };
 
-        // LOJAS
+        // ==========================================
+        // MÓDULO LOJAS
+        // ==========================================
         document.getElementById('s-logo').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
@@ -175,7 +196,14 @@
             }
         });
 
-        function saveStore() {
+        // Carrega Lojas em Tempo Real
+        onSnapshot(collection(db, "stores"), (snapshot) => {
+            allStores = [];
+            snapshot.forEach(doc => allStores.push({ id: doc.id, ...doc.data() }));
+            renderStoreList();
+        });
+
+        window.saveStore = async () => {
             const name = document.getElementById('s-name').value.trim();
             const email = document.getElementById('s-email').value.trim();
             const pass = document.getElementById('s-pass').value.trim();
@@ -187,40 +215,30 @@
                 const emailExists = allStores.find(s => s.email === email && s.id !== editingStoreId);
                 if(emailExists) return alert("Já existe outra loja usando este e-mail.");
 
-                allStores = allStores.map(s => {
-                    if(s.id === editingStoreId) {
-                        return {
-                            ...s, 
-                            name: name, email: email, password: pass, cat: cat,
-                            logo: storeImgBase64 || s.logo
-                        };
-                    }
-                    return s;
-                });
+                const updateData = { name, email, password: pass, cat };
+                if (storeImgBase64) updateData.logo = storeImgBase64;
+
+                await updateDoc(doc(db, "stores", editingStoreId), updateData);
                 alert("Loja atualizada com sucesso!");
             } else {
                 const emailExists = allStores.find(s => s.email === email);
                 if(emailExists) return alert("Já existe uma loja cadastrada com este e-mail.");
 
-                const newStore = {
-                    id: Date.now(), name: name, email: email, password: pass, cat: cat, 
-                    status: 'Aberto', 
-                    isActive: true, // NOVO: Controla se a loja pagou a hospedagem
+                await addDoc(collection(db, "stores"), {
+                    name: name, email: email, password: pass, cat: cat, 
+                    status: 'Aberto', isActive: true, 
                     logo: storeImgBase64 || 'https://via.placeholder.com/60'
-                };
-                allStores.push(newStore);
+                });
                 alert("Loja cadastrada com sucesso!");
             }
-            
-            localStorage.setItem('registeredStores', JSON.stringify(allStores));
-            cancelEdit();
-            renderStoreList();
-        }
+            window.cancelEdit();
+        };
 
-        function editStore(id) {
+        window.editStore = (id) => {
             editingStoreId = id;
             const store = allStores.find(s => s.id === id);
             if(!store) return;
+            
             document.getElementById('s-name').value = store.name;
             document.getElementById('s-email').value = store.email;
             document.getElementById('s-pass').value = store.password;
@@ -233,9 +251,9 @@
             document.getElementById('btn-save-store').style.backgroundColor = "#0d6efd"; 
             document.getElementById('btn-cancel-edit').style.display = "inline-block";
             document.querySelector('.main-content').scrollTo({ top: 0, behavior: 'smooth' });
-        }
+        };
 
-        function cancelEdit() {
+        window.cancelEdit = () => {
             editingStoreId = null;
             document.getElementById('s-name').value = '';
             document.getElementById('s-email').value = '';
@@ -246,21 +264,30 @@
             document.getElementById('btn-save-store').innerText = "Registrar Loja";
             document.getElementById('btn-save-store').style.backgroundColor = "#ea1d2c"; 
             document.getElementById('btn-cancel-edit').style.display = "none";
-        }
+        };
 
-        // FUNÇÃO DE SUSPENDER / REATIVAR LOJA POR FALTA DE PAGAMENTO
-        function toggleSubscription(id) {
-            allStores = allStores.map(s => {
-                if(s.id === id) {
-                    // Se for false vira true, se for true (ou undefined) vira false
-                    const newStatus = s.isActive === false ? true : false;
-                    return { ...s, isActive: newStatus };
-                }
-                return s;
-            });
-            localStorage.setItem('registeredStores', JSON.stringify(allStores));
-            renderStoreList();
-        }
+        // Suspender/Reativar por pagamento
+        window.toggleSubscription = async (id) => {
+            const store = allStores.find(s => s.id === id);
+            if (store) {
+                const newStatus = store.isActive === false ? true : false;
+                await updateDoc(doc(db, "stores", id), { isActive: newStatus });
+            }
+        };
+
+        window.deleteStore = async (id) => {
+            if(confirm("Tem certeza que deseja apagar esta loja PERMANENTEMENTE?\n\nIsso também apagará todos os produtos dela!")) {
+                // Deleta a loja
+                await deleteDoc(doc(db, "stores", id));
+                
+                // Busca e deleta todos os produtos vinculados à loja
+                const q = query(collection(db, "products"), where("storeId", "==", id));
+                const querySnapshot = await getDocs(q);
+                querySnapshot.forEach(async (document) => {
+                    await deleteDoc(doc(db, "products", document.id));
+                });
+            }
+        };
 
         function renderStoreList() {
             const container = document.getElementById('store-list-container');
@@ -269,13 +296,10 @@
                 return;
             }
             container.innerHTML = allStores.map(s => {
-                // Checa se a loja está ativa (se não existir a propriedade, considera ativa)
                 const isActive = s.isActive !== false; 
-                
                 const cardClass = isActive ? 'card-item' : 'card-item suspended';
                 const badgeClass = isActive ? 'badge-status badge-active' : 'badge-status badge-suspended';
                 const badgeText = isActive ? '✅ Assinatura Ativa' : '❌ Falta de Pagamento';
-                
                 const toggleBtnClass = isActive ? 'btn-suspend' : 'btn-reactivate';
                 const toggleBtnText = isActive ? '⏸️ Suspender' : '▶️ Reativar';
 
@@ -288,33 +312,15 @@
                         <span class="${badgeClass}">${badgeText}</span>
                     </div>
                     <div class="actions-col">
-                        <button class="btn-edit" onclick="editStore(${s.id})">✏️ Editar</button>
-                        <button class="${toggleBtnClass}" onclick="toggleSubscription(${s.id})">${toggleBtnText}</button>
+                        <button class="btn-edit" onclick="window.editStore('${s.id}')">✏️ Editar</button>
+                        <button class="${toggleBtnClass}" onclick="window.toggleSubscription('${s.id}')">${toggleBtnText}</button>
                         <span style="color:#ddd;">|</span>
-                        <button class="btn-del" onclick="deleteStore(${s.id})">🗑️ Apagar</button>
+                        <button class="btn-del" onclick="window.deleteStore('${s.id}')">🗑️ Apagar</button>
                     </div>
                 </div>
                 `;
             }).join('');
         }
-
-        function deleteStore(id) {
-            if(confirm("Tem certeza que deseja apagar esta loja PERMANENTEMENTE?")) {
-                allStores = allStores.filter(s => s.id !== id);
-                localStorage.setItem('registeredStores', JSON.stringify(allStores));
-                
-                let allProducts = JSON.parse(localStorage.getItem('globalProducts')) || [];
-                allProducts = allProducts.filter(p => p.storeId !== id);
-                localStorage.setItem('globalProducts', JSON.stringify(allProducts));
-
-                renderStoreList();
-            }
-        }
-
-        window.onload = () => {
-            renderBanners();
-            renderStoreList();
-        };
     </script>
 </body>
 </html>
