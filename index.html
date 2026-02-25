@@ -56,7 +56,7 @@
         .banner-slide { flex: 0 0 100%; height: 150px; border-radius: 12px; object-fit: cover; scroll-snap-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
 
         /* =========================================================
-           CATEGORIAS (VETORES SVG PUROS: BRANCO E VERMELHO)
+           CATEGORIAS (VETORES SVG PUROS)
            ========================================================= */
         .button-scroll-container { 
             display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 12px; padding: 15px; 
@@ -97,7 +97,7 @@
         .store-details .dot { color: #ccc; font-size: 0.6rem; }
 
         /* =========================================================
-           MODAIS E CARDÁPIO DA LOJA (CORRIGIDO OS Z-INDEX)
+           MODAIS E CARDÁPIO DA LOJA
            ========================================================= */
         #menu-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f8f8f8; z-index: 10000; transform: translateY(100%); transition: transform 0.3s ease; overflow-y: auto; padding-bottom: 20px; display: block; }
         #menu-modal.active { transform: translateY(0); }
@@ -155,14 +155,13 @@
         .obs-textarea { width: 100%; border: 1px solid #ddd; border-radius: 8px; padding: 12px; font-size: 0.95rem; outline: none; resize: none; margin-bottom: 20px; background: #f9f9f9; }
         .obs-textarea:focus { border-color: #ccc; background: #fff; }
 
-        /* BARRA DE AÇÃO (ADICIONAR AO CARRINHO) */
         .bottom-action-bar { position: fixed; bottom: 0; width: 100%; background: #fff; padding: 15px 20px; border-top: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; z-index: 10002; box-shadow: 0 -4px 15px rgba(0,0,0,0.08); padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
         .qty-controls { display: flex; align-items: center; gap: 15px; border: 1px solid #ddd; border-radius: 8px; padding: 8px 12px; }
         .qty-btn { background: none; border: none; font-size: 1.4rem; color: #ea1d2c; cursor: pointer; width: 25px; display: flex; justify-content: center; }
         .qty-number { font-size: 1.1rem; font-weight: 500; color: #333; }
         .btn-add-cart { background: #ea1d2c; color: #fff; border: none; border-radius: 8px; padding: 14px 20px; font-weight: 500; font-size: 1rem; flex: 1; margin-left: 15px; display: flex; justify-content: space-between; cursor: pointer; transition: background 0.2s; }
         
-        /* MENU INFERIOR GERAL (O z-index é menor que o do Produto, para ele sumir) */
+        /* MENU INFERIOR GERAL */
         .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; display: flex; justify-content: space-around; padding: 12px 0; padding-bottom: calc(12px + env(safe-area-inset-bottom)); border-top: 1px solid #eee; z-index: 9999; box-shadow: 0 -2px 10px rgba(0,0,0,0.02); }
         .nav-link { text-align: center; color: #717171; font-size: 0.7rem; text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 4px; transition: 0.2s; }
         .nav-icon-img { width: 24px; height: 24px; filter: invert(20%) sepia(91%) saturate(5437%) hue-rotate(352deg) brightness(94%) contrast(98%); }
@@ -203,77 +202,66 @@
     </div>
 
     <section class="button-scroll-container" id="category-filters">
-        
         <div class="button-item active" onclick="filterCategory('Todos', this)">
             <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon">
                 <path d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z"/>
             </svg>
             <span>Todos</span>
         </div>
-        
         <div class="button-item" onclick="filterCategory('Restaurantes', this)">
             <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon">
                 <path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/>
             </svg>
             <span>Restaurantes</span>
         </div>
-        
         <div class="button-item" onclick="filterCategory('Lanches', this)">
             <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon">
                 <path d="M21.99 10.93c-.15-2.92-2.31-5.38-5.18-5.83C15.22 4.41 13.68 4 12 4s-3.22.41-4.81 1.1c-2.87.45-5.03 2.91-5.18 5.83H2v2h2v4c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-4h2v-2h-.01zM18 17H6v-4h12v4z"/>
             </svg>
             <span>Lanches</span>
         </div>
-        
         <div class="button-item" onclick="filterCategory('Bares', this)">
             <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon">
                 <path d="M21 5V3H3v2l8 9v5H6v2h12v-2h-5v-5l8-9zM7.43 7L5.66 5h12.69l-1.78 2H7.43z"/>
             </svg>
             <span>Bares</span>
         </div>
-        
         <div class="button-item" onclick="filterCategory('Sorveterias', this)">
             <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon">
                 <path d="M12 2C8.69 2 6 4.69 6 8c0 3.08 2.31 5.64 5.25 5.95V22h1.5v-8.05C15.69 13.64 18 11.08 18 8c0-3.31-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/>
             </svg>
             <span>Sorveterias</span>
         </div>
-        
         <div class="button-item" onclick="filterCategory('Mercados', this)">
             <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon">
                 <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/>
             </svg>
             <span>Mercados</span>
         </div>
-        
         <div class="button-item" onclick="filterCategory('Farmácias', this)">
             <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon">
                 <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
             </svg>
             <span>Farmácias</span>
         </div>
-        
         <div class="button-item" onclick="filterCategory('Loja de Roupas', this)">
             <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon">
                 <path d="M21.99 8c0-.72-.37-1.35-.94-1.7L12 1 2.95 6.3C2.38 6.65 2 7.28 2 8v2h2v11h16V10h2V8zM12 3.19l7 3.91V8h-2v11H7V8H5V7.1l7-3.91z"/>
             </svg>
             <span>Moda</span>
         </div>
-        
         <div class="button-item" onclick="filterCategory('Açougue', this)">
             <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon">
                 <path d="M20.5 3.5l-6 6c-.39-.39-1.02-.39-1.41 0L3.5 19.09l1.41 1.41 9.59-9.59c.39.39 1.02.39 1.41 0l6-6V3.5h-1.41z"/>
             </svg>
             <span>Açougue</span>
         </div>
-        
         <div class="button-item" onclick="filterCategory('Utilidades', this)">
             <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon">
                 <path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/>
             </svg>
             <span>Utilidades</span>
         </div>
-
     </section>
 
     <h2 class="section-title" id="list-title">Lojas</h2>
@@ -329,16 +317,34 @@
         </a>
     </nav>
 
-    <script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // SUA CONFIGURAÇÃO OFICIAL
+        const firebaseConfig = {
+            apiKey: "AIzaSyBinV28T4xWvYAnE0Yed1rbsp9dEF_n7Eg",
+            authDomain: "dores-delivery.firebaseapp.com",
+            projectId: "dores-delivery",
+            storageBucket: "dores-delivery.firebasestorage.app",
+            messagingSenderId: "1029498697239",
+            appId: "1:1029498697239:web:3ebc070bbd65048bd9ce52"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // VARIÁVEIS GLOBAIS
+        let allStores = [];
         let currentStoreProducts = [];
-        let cart = JSON.parse(localStorage.getItem('cart')) || [];
         let activeProduct = null;
         let activeStore = { name: '', logo: '', status: '' };
         let prodQty = 1;
         let basePriceCalc = 0;
         let currentCategoryFilter = null; 
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
 
-        // LÓGICA DA TELA DE SPLASH (Esconde após 1.5s)
+        // REMOVE O SPLASH SCREEN APÓS 1.5s
         window.addEventListener('load', () => {
             setTimeout(() => {
                 const splash = document.getElementById('splash-screen');
@@ -347,12 +353,15 @@
                     setTimeout(() => splash.style.display = 'none', 500); 
                 }
             }, 1500);
+            window.updateCartBadge();
         });
 
-        function loadBanners() {
-            const banners = JSON.parse(localStorage.getItem('globalBanners')) || [];
-            const wrapper = document.getElementById('banner-wrapper');
+        // 1. CARREGAR BANNERS (TEMPO REAL)
+        onSnapshot(collection(db, "banners"), (snapshot) => {
             const track = document.getElementById('banner-track');
+            const wrapper = document.getElementById('banner-wrapper');
+            const banners = [];
+            snapshot.forEach(doc => banners.push(doc.data()));
 
             if(banners.length > 0) {
                 wrapper.style.display = 'block';
@@ -370,62 +379,24 @@
             } else {
                 wrapper.style.display = 'none';
             }
-        }
+        });
 
-        function updateCartBadge() {
-            const mainBadge = document.getElementById('cart-count');
-            if (mainBadge) {
-                if (cart.length > 0) {
-                    mainBadge.style.display = 'block';
-                    mainBadge.innerText = cart.length;
-                } else {
-                    mainBadge.style.display = 'none';
-                }
-            }
-            
-            const modalBadge = document.getElementById('modal-cart-count');
-            if (modalBadge) {
-                if (cart.length > 0) {
-                    modalBadge.style.display = 'block';
-                    modalBadge.innerText = cart.length;
-                } else {
-                    modalBadge.style.display = 'none';
-                }
-            }
-        }
+        // 2. CARREGAR LOJAS (TEMPO REAL)
+        onSnapshot(collection(db, "stores"), (snapshot) => {
+            allStores = [];
+            snapshot.forEach(doc => allStores.push({ id: doc.id, ...doc.data() }));
+            window.renderStores();
+        });
 
-        // ==========================================
-        // FILTROS DA TELA INICIAL (LOJAS)
-        // ==========================================
-        function filterCategory(categoryName, element) {
-            const allButtons = document.querySelectorAll('#category-filters .button-item');
-            allButtons.forEach(btn => btn.classList.remove('active'));
-
-            if (categoryName === 'Todos' || currentCategoryFilter === categoryName) {
-                currentCategoryFilter = null;
-                document.querySelector('#category-filters .button-item').classList.add('active');
-                document.getElementById('list-title').innerText = "Lojas";
-            } else {
-                element.classList.add('active');
-                currentCategoryFilter = categoryName;
-                document.getElementById('list-title').innerText = "Lojas - " + element.querySelector('span').innerText;
-            }
-            loadStores();
-        }
-
-        function loadStores() {
+        window.renderStores = () => {
             const container = document.getElementById('store-list-container');
-            let stores = JSON.parse(localStorage.getItem('registeredStores')) || [];
+            let filteredStores = allStores.filter(s => s.isActive !== false);
 
-            stores = stores.filter(s => s.isActive !== false);
-
-            let filteredStores = stores;
-            if (currentCategoryFilter) {
-                filteredStores = stores.filter(s => {
-                    return s.cat && s.cat.toLowerCase().includes(currentCategoryFilter.toLowerCase());
-                });
+            if (currentCategoryFilter && currentCategoryFilter !== 'Todos') {
+                filteredStores = filteredStores.filter(s => s.cat && s.cat.toLowerCase().includes(currentCategoryFilter.toLowerCase()));
             }
 
+            // Ordena lojas fechadas/inativas para o final
             filteredStores.sort((a, b) => {
                 const getWeight = (store) => {
                     if (store.isActive === false) return 2; 
@@ -457,7 +428,7 @@
 
                 const onClickAction = isSuspended 
                     ? `alert('Esta loja está temporariamente indisponível.');` 
-                    : `openMenu(${s.id}, '${s.name}', '${s.logo}', '${s.cat}', '${s.status}')`;
+                    : `window.openMenu('${s.id}', '${s.name}', '${s.logo}', '${s.cat}', '${s.status}')`;
                 
                 return `
                 <div class="${cardClass}" onclick="${onClickAction}">
@@ -473,40 +444,58 @@
                 </div>
                 `;
             }).join('');
-        }
+        };
 
-        // ==========================================
-        // FILTROS DENTRO DO CARDÁPIO DA LOJA
-        // ==========================================
-        function filterStoreMenu(categoryName, element) {
-            document.querySelectorAll('.store-cat-btn').forEach(btn => btn.classList.remove('active'));
-            element.classList.add('active');
+        // 3. FILTRO DE CATEGORIAS
+        window.filterCategory = (categoryName, element) => {
+            const allButtons = document.querySelectorAll('#category-filters .button-item');
+            allButtons.forEach(btn => btn.classList.remove('active'));
 
-            document.querySelectorAll('.store-category-group').forEach(group => {
-                if (categoryName === 'Todas' || group.dataset.category === categoryName) {
-                    group.style.display = 'block';
-                } else {
-                    group.style.display = 'none';
-                }
-            });
-        }
+            if (categoryName === 'Todos' || currentCategoryFilter === categoryName) {
+                currentCategoryFilter = null;
+                document.querySelector('#category-filters .button-item').classList.add('active');
+                document.getElementById('list-title').innerText = "Lojas";
+            } else {
+                element.classList.add('active');
+                currentCategoryFilter = categoryName;
+                document.getElementById('list-title').innerText = "Lojas - " + element.querySelector('span').innerText;
+            }
+            window.renderStores();
+        };
 
-        // ==========================================
-        // ABRIR O MENU DA LOJA
-        // ==========================================
-        function openMenu(storeId, storeName, storeLogo, storeCat, storeStatus) {
-            activeStore = { name: storeName, logo: storeLogo, status: storeStatus || 'Aberto' };
-            const allProducts = JSON.parse(localStorage.getItem('globalProducts')) || [];
-            currentStoreProducts = allProducts.filter(p => p.storeId === storeId);
+        // 4. ABRIR CARDÁPIO DA LOJA (Busca produtos no Firebase)
+        window.openMenu = (storeId, storeName, storeLogo, storeCat, storeStatus) => {
+            activeStore = { id: storeId, name: storeName, logo: storeLogo, status: storeStatus || 'Aberto' };
             const coverImage = storeLogo !== 'https://via.placeholder.com/60' ? storeLogo : 'https://via.placeholder.com/600x300';
             
+            document.getElementById('modal-content').innerHTML = `
+                <div class="store-cover" style="background-image: url('${coverImage}');">
+                    <div class="cover-btns">
+                        <button class="btn-circle" onclick="window.closeMenu()">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        </button>
+                    </div>
+                </div>
+                <div style="padding: 40px; text-align: center; color: #777;">Carregando cardápio...</div>
+            `;
+            document.getElementById('menu-modal').classList.add('active');
+
+            // Busca os produtos da loja clicada em tempo real
+            const q = query(collection(db, "products"), where("storeId", "==", storeId));
+            onSnapshot(q, (snapshot) => {
+                currentStoreProducts = [];
+                snapshot.forEach(doc => currentStoreProducts.push({ id: doc.id, ...doc.data() }));
+                window.renderMenuHtml(storeName, storeLogo, storeCat, storeStatus, coverImage);
+            });
+        };
+
+        window.renderMenuHtml = (storeName, storeLogo, storeCat, storeStatus, coverImage) => {
             let productsHTML = '';
 
             if (currentStoreProducts.length === 0) {
                 productsHTML = `<div style="background: #fff; padding: 40px 20px; text-align: center; color: #717171; height: 100%;">O cardápio está sendo atualizado. Volte em breve!</div>`;
             } else {
                 let categories = [...new Set(currentStoreProducts.map(p => p.category || 'Geral'))];
-                
                 categories.sort((a, b) => {
                     if (a === 'Destaques') return -1;
                     if (b === 'Destaques') return 1;
@@ -515,8 +504,8 @@
 
                 let filtersHTML = `
                     <div class="store-menu-filters" id="store-menu-filters">
-                        <button class="store-cat-btn active" onclick="filterStoreMenu('Todas', this)">Todas</button>
-                        ${categories.map(c => `<button class="store-cat-btn" onclick="filterStoreMenu('${c}', this)">${c}</button>`).join('')}
+                        <button class="store-cat-btn active" onclick="window.filterStoreMenu('Todas', this)">Todas</button>
+                        ${categories.map(c => `<button class="store-cat-btn" onclick="window.filterStoreMenu('${c}', this)">${c}</button>`).join('')}
                     </div>
                 `;
 
@@ -531,7 +520,7 @@
                                     let badgeTop = (cat === 'Destaques' && index === 0) ? '<div class="badge-top">Mais pedido</div>' : '';
 
                                     return `
-                                    <div class="prod-card-list" onclick="openProductModal(${p.id})">
+                                    <div class="prod-card-list" onclick="window.openProductModal('${p.id}')">
                                         <div class="img-wrapper">
                                             <img src="${p.image || 'https://via.placeholder.com/150'}" alt="Foto Produto">
                                             ${badgeTop}
@@ -555,7 +544,7 @@
             document.getElementById('modal-content').innerHTML = `
                 <div class="store-cover" style="background-image: url('${coverImage}');">
                     <div class="cover-btns">
-                        <button class="btn-circle" onclick="closeMenu()">
+                        <button class="btn-circle" onclick="window.closeMenu()">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
                         </button>
                         
@@ -579,24 +568,32 @@
                 </div>
                 ${productsHTML}
             `;
-            document.getElementById('menu-modal').classList.add('active');
-            
-            updateCartBadge(); 
-        }
+            window.updateCartBadge(); 
+        };
 
-        function closeMenu() { document.getElementById('menu-modal').classList.remove('active'); }
+        window.filterStoreMenu = (categoryName, element) => {
+            document.querySelectorAll('.store-cat-btn').forEach(btn => btn.classList.remove('active'));
+            element.classList.add('active');
+            document.querySelectorAll('.store-category-group').forEach(group => {
+                if (categoryName === 'Todas' || group.dataset.category === categoryName) {
+                    group.style.display = 'block';
+                } else {
+                    group.style.display = 'none';
+                }
+            });
+        };
 
-        // ==========================================
-        // PRODUTO INDIVIDUAL E CARRINHO
-        // ==========================================
-        function openProductModal(productId) {
+        window.closeMenu = () => document.getElementById('menu-modal').classList.remove('active');
+
+        // 5. PRODUTO INDIVIDUAL
+        window.openProductModal = (productId) => {
             activeProduct = currentStoreProducts.find(p => p.id === productId);
             if(!activeProduct) return;
 
             prodQty = 1;
             document.getElementById('p-modal-qty').innerText = prodQty;
             document.getElementById('p-modal-obs').value = '';
-            updateObsCount();
+            window.updateObsCount();
 
             document.getElementById('p-modal-img').src = activeProduct.image || 'https://via.placeholder.com/600x400';
             document.getElementById('p-modal-name').innerText = activeProduct.name;
@@ -616,7 +613,7 @@
                                 <label>${v.name}</label>
                                 <div style="display:flex; align-items:center; gap:10px;">
                                     <span class="option-price">+ R$ ${v.price.toFixed(2)}</span>
-                                    <input type="radio" name="prodVariant" id="var-${index}" value="${v.price}" ${index === 0 ? 'checked' : ''} onchange="calculateModalPrice()">
+                                    <input type="radio" name="prodVariant" id="var-${index}" value="${v.price}" ${index === 0 ? 'checked' : ''} onchange="window.calculateModalPrice()">
                                 </div>
                             </div>
                         `).join('')}
@@ -625,65 +622,58 @@
             } else { varContainer.innerHTML = ''; }
 
             const addContainer = document.getElementById('p-modal-addons');
-            
             if (activeProduct.modifiers && activeProduct.modifiers.length > 0) {
                 addContainer.innerHTML = activeProduct.modifiers.map((modCat, catIdx) => {
                     const reqBadge = modCat.isRequired ? `<span style="background:#ea1d2c; color:#fff; font-size:0.6rem; padding:2px 6px; border-radius:4px; margin-left:10px;">Obrigatório</span>` : '';
                     const typeInput = modCat.isMultiple ? 'checkbox' : 'radio';
-                    
                     return `
                     <div class="options-group">
                         <h4 style="margin-bottom: 5px;">${modCat.name} ${reqBadge}</h4>
                         <p style="font-size:0.75rem; color:#777; margin-bottom: 10px;">${modCat.isMultiple ? 'Escolha vários' : 'Escolha 1'}</p>
-                        
                         ${modCat.options.map((opt, optIdx) => `
                             <div class="option-item" onclick="document.getElementById('mod-${catIdx}-${optIdx}').click()">
                                 <label>${opt.name}</label>
                                 <div style="display:flex; align-items:center; gap:10px;">
                                     <span class="option-price">${opt.price > 0 ? '+ R$ ' + parseFloat(opt.price).toFixed(2) : ''}</span>
-                                    <input type="${typeInput}" class="addon-check" name="modcat_${catIdx}" id="mod-${catIdx}-${optIdx}" value="${opt.price || 0}" data-name="${opt.name}" onchange="calculateModalPrice()">
+                                    <input type="${typeInput}" class="addon-check" name="modcat_${catIdx}" id="mod-${catIdx}-${optIdx}" value="${opt.price || 0}" data-name="${opt.name}" onchange="window.calculateModalPrice()">
                                 </div>
                             </div>
                         `).join('')}
                     </div>
                     `;
                 }).join('');
-            } else {
-                addContainer.innerHTML = ''; 
-            }
+            } else { addContainer.innerHTML = ''; }
 
-            calculateModalPrice();
+            window.calculateModalPrice();
             document.getElementById('product-modal').classList.add('active');
-        }
+        };
 
-        function closeProductModal() { document.getElementById('product-modal').classList.remove('active'); }
+        window.closeProductModal = () => document.getElementById('product-modal').classList.remove('active');
 
-        function changeQty(amount) {
+        window.changeQty = (amount) => {
             prodQty += amount;
             if (prodQty < 1) prodQty = 1;
             document.getElementById('p-modal-qty').innerText = prodQty;
-            calculateModalPrice();
-        }
+            window.calculateModalPrice();
+        };
 
-        function updateObsCount() {
+        window.updateObsCount = () => {
             const obs = document.getElementById('p-modal-obs').value;
             document.getElementById('obs-count').innerText = `${obs.length}/140`;
-        }
+        };
 
-        function calculateModalPrice() {
+        window.calculateModalPrice = () => {
             let finalPrice = basePriceCalc;
-            
             const selectedVariant = document.querySelector('input[name="prodVariant"]:checked');
             if (selectedVariant) finalPrice = parseFloat(selectedVariant.value);
-
             const addons = document.querySelectorAll('.addon-check:checked');
             addons.forEach(addon => { finalPrice += parseFloat(addon.value); });
 
             const total = finalPrice * prodQty;
             document.getElementById('p-modal-total-btn').innerText = `R$ ${total.toFixed(2)}`;
-        }
+        };
 
-        function confirmAddToCart() {
+        window.confirmAddToCart = () => {
             if(activeStore.status === 'Fechado') {
                 alert("Esta loja está fechada no momento. Não é possível adicionar itens ao carrinho.");
                 return;
@@ -729,19 +719,28 @@
                 observation: observation,
                 price: finalPrice * prodQty,
                 qty: prodQty,
-                store: activeStore.name
+                store: activeStore.name,
+                storeId: activeStore.id
             };
 
             cart.push(cartItem);
             localStorage.setItem('cart', JSON.stringify(cart));
-            updateCartBadge();
-            closeProductModal();
-        }
+            window.updateCartBadge();
+            window.closeProductModal();
+        };
 
-        window.onload = () => {
-            loadBanners();
-            loadStores();
-            updateCartBadge();
+        window.updateCartBadge = () => {
+            const mainBadge = document.getElementById('cart-count');
+            const modalBadge = document.getElementById('modal-cart-count');
+            
+            if (mainBadge) {
+                mainBadge.style.display = cart.length > 0 ? 'block' : 'none';
+                mainBadge.innerText = cart.length;
+            }
+            if (modalBadge) {
+                modalBadge.style.display = cart.length > 0 ? 'block' : 'none';
+                modalBadge.innerText = cart.length;
+            }
         };
     </script>
 </body>
