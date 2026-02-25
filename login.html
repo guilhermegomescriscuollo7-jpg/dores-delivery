@@ -31,6 +31,7 @@
 
         .btn-primary { width: 100%; padding: 16px; background-color: #ea1d2c; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.2s; margin-top: 10px; }
         .btn-primary:hover { background-color: #c81824; }
+        .btn-primary:disabled { background-color: #ccc; cursor: not-allowed; }
 
         .toggle-link { text-align: center; margin-top: 25px; font-size: 0.9rem; color: #717171; }
         .toggle-link a { color: #ea1d2c; text-decoration: none; font-weight: bold; cursor: pointer; }
@@ -62,10 +63,10 @@
             <div class="form-group">
                 <input type="password" id="login-pass" placeholder="Sua senha" required>
             </div>
-            <button type="submit" class="btn-primary">Entrar</button>
+            <button type="submit" id="btn-login" class="btn-primary">Entrar</button>
             
             <div class="toggle-link">
-                Ainda não tem conta? <a onclick="toggleMode('register')">Criar conta</a>
+                Ainda não tem conta? <a onclick="window.toggleMode('register')">Criar conta</a>
             </div>
         </form>
 
@@ -80,20 +81,33 @@
                 <input type="tel" id="reg-phone" placeholder="Celular / WhatsApp" required>
             </div>
             <div class="form-group">
-                <input type="password" id="reg-pass" placeholder="Crie uma senha" required>
+                <input type="password" id="reg-pass" placeholder="Crie uma senha" minlength="6" required>
             </div>
-            <button type="submit" class="btn-primary">Criar minha conta</button>
+            <button type="submit" id="btn-register" class="btn-primary">Criar minha conta</button>
             
             <div class="toggle-link">
-                Já tem uma conta? <a onclick="toggleMode('login')">Fazer Login</a>
+                Já tem uma conta? <a onclick="window.toggleMode('login')">Fazer Login</a>
             </div>
         </form>
 
     </div>
 
-    <script>
-        // BANCO DE DADOS DE CLIENTES
-        let globalUsers = JSON.parse(localStorage.getItem('globalUsers')) || [];
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // SUA CONFIGURAÇÃO OFICIAL FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyBinV28T4xWvYAnE0Yed1rbsp9dEF_n7Eg",
+            authDomain: "dores-delivery.firebaseapp.com",
+            projectId: "dores-delivery",
+            storageBucket: "dores-delivery.firebasestorage.app",
+            messagingSenderId: "1029498697239",
+            appId: "1:1029498697239:web:3ebc070bbd65048bd9ce52"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
         const alertBox = document.getElementById('alertBox');
 
@@ -105,7 +119,7 @@
         }
 
         // ALTERNA ENTRE LOGIN E CADASTRO
-        function toggleMode(mode) {
+        window.toggleMode = function(mode) {
             alertBox.style.display = 'none';
             if (mode === 'register') {
                 document.getElementById('login-form').style.display = 'none';
@@ -118,7 +132,7 @@
                 document.getElementById('page-title').innerText = 'Falta pouco!';
                 document.getElementById('page-subtitle').innerText = 'Entre com a sua conta para pedir.';
             }
-        }
+        };
 
         // DIRECIONAMENTO INTELIGENTE (Se tiver item no carrinho, volta pro carrinho)
         function redirectAfterAuth() {
@@ -130,52 +144,96 @@
             }
         }
 
-        // LÓGICA DE LOGIN
-        document.getElementById('login-form').addEventListener('submit', function(e) {
+        function saveLocalSession(name, email, phone) {
+            // Salva os dados na memória do celular para não pedir login toda hora
+            const userData = { name, email, phone };
+            localStorage.setItem('loggedCustomer', JSON.stringify(userData));
+            
+            // Mantém as variáveis antigas por segurança e compatibilidade
+            localStorage.setItem('isLogged', 'true');
+            localStorage.setItem('userEmail', email);
+            localStorage.setItem('userName', name);
+        }
+
+        // LÓGICA DE LOGIN NO FIREBASE
+        document.getElementById('login-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             const email = document.getElementById('login-email').value.trim();
             const pass = document.getElementById('login-pass').value.trim();
+            const btn = document.getElementById('btn-login');
 
-            const user = globalUsers.find(u => u.email === email && u.password === pass);
+            btn.disabled = true;
+            btn.innerText = "Verificando...";
 
-            if (user) {
-                localStorage.setItem('isLogged', 'true');
-                localStorage.setItem('userEmail', user.email);
-                localStorage.setItem('userName', user.name);
-                redirectAfterAuth();
-            } else {
-                showAlert("E-mail ou senha incorretos. Tente novamente.");
-                document.getElementById('login-pass').value = '';
+            try {
+                // Busca o usuário na nuvem
+                const q = query(collection(db, "customers"), where("email", "==", email), where("password", "==", pass));
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    showAlert("E-mail ou senha incorretos. Tente novamente.");
+                    document.getElementById('login-pass').value = '';
+                } else {
+                    let userData = null;
+                    querySnapshot.forEach(doc => userData = doc.data());
+                    
+                    saveLocalSession(userData.name, userData.email, userData.phone);
+                    
+                    showAlert("Login efetuado com sucesso!", false);
+                    setTimeout(() => redirectAfterAuth(), 1000);
+                }
+            } catch (error) {
+                console.error(error);
+                showAlert("Erro ao conectar com o servidor.");
             }
+
+            btn.disabled = false;
+            btn.innerText = "Entrar";
         });
 
-        // LÓGICA DE CADASTRO
-        document.getElementById('register-form').addEventListener('submit', function(e) {
+        // LÓGICA DE CADASTRO NO FIREBASE
+        document.getElementById('register-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             const name = document.getElementById('reg-name').value.trim();
             const email = document.getElementById('reg-email').value.trim();
             const phone = document.getElementById('reg-phone').value.trim();
             const pass = document.getElementById('reg-pass').value.trim();
+            const btn = document.getElementById('btn-register');
 
-            // Verifica se o e-mail já existe
-            const userExists = globalUsers.find(u => u.email === email);
-            if (userExists) {
-                showAlert("Este e-mail já está cadastrado. Faça login.");
-                return;
+            btn.disabled = true;
+            btn.innerText = "Criando conta...";
+
+            try {
+                // Verifica se o e-mail já existe
+                const q = query(collection(db, "customers"), where("email", "==", email));
+                const querySnapshot = await getDocs(q);
+
+                if (!querySnapshot.empty) {
+                    showAlert("Este e-mail já está cadastrado. Faça login.");
+                } else {
+                    // Salva o novo usuário no Firebase
+                    const newUser = { 
+                        name: name, 
+                        email: email, 
+                        phone: phone, 
+                        password: pass, 
+                        createdAt: new Date().toISOString() 
+                    };
+                    await addDoc(collection(db, "customers"), newUser);
+
+                    // Já faz o login automaticamente após o cadastro
+                    saveLocalSession(name, email, phone);
+                    
+                    showAlert("Conta criada com sucesso!", false);
+                    setTimeout(() => redirectAfterAuth(), 1000);
+                }
+            } catch (error) {
+                console.error(error);
+                showAlert("Erro ao conectar com o servidor.");
             }
 
-            // Salva o novo usuário
-            const newUser = { id: Date.now(), name, email, phone, password: pass };
-            globalUsers.push(newUser);
-            localStorage.setItem('globalUsers', JSON.stringify(globalUsers));
-
-            // Já faz o login automaticamente após o cadastro
-            localStorage.setItem('isLogged', 'true');
-            localStorage.setItem('userEmail', email);
-            localStorage.setItem('userName', name);
-            
-            showAlert("Conta criada com sucesso!", false);
-            setTimeout(() => { redirectAfterAuth(); }, 1000);
+            btn.disabled = false;
+            btn.innerText = "Criar minha conta";
         });
     </script>
 </body>
