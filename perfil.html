@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meu Perfil - Dores Delivery</title>
+    <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', sans-serif; }
@@ -44,10 +45,11 @@
         .logout-btn:active { background: #fef0f0; }
 
         /* MENU INFERIOR GERAL */
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: #fff; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #eee; z-index: 150; }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #eee; z-index: 150; padding-bottom: calc(12px + env(safe-area-inset-bottom)); box-shadow: 0 -2px 10px rgba(0,0,0,0.02);}
         .nav-link { text-align: center; color: #717171; font-size: 0.7rem; text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 4px; transition: 0.2s; }
-        .nav-icon-img { width: 24px; height: 24px; filter: invert(20%) sepia(91%) saturate(5437%) hue-rotate(352deg) brightness(94%) contrast(98%); }
+        .nav-icon-img { width: 24px; height: 24px; filter: invert(40%); }
         .nav-link.active { color: #ea1d2c; font-weight: bold; }
+        .nav-link.active .nav-icon-img { filter: invert(20%) sepia(91%) saturate(5437%) hue-rotate(352deg) brightness(94%) contrast(98%); }
 
         /* =========================================================
            MODAIS DE EDIÇÃO (ENDEREÇO E CONFIGURAÇÕES)
@@ -120,6 +122,15 @@
                 </a>
             </div>
 
+            <div class="menu-list" id="install-container" style="display: none; border-color: #ea1d2c;">
+                <a class="menu-item" id="btn-install-app" style="background: #fff5f5;">
+                    <div class="menu-item-left">
+                        <span class="menu-icon">📱</span> <span style="color: #ea1d2c; font-weight: bold;">Baixar App do Delivery</span>
+                    </div>
+                    <span class="menu-arrow" style="color: #ea1d2c;">↓</span>
+                </a>
+            </div>
+
             <button class="logout-btn" onclick="window.logoutCustomer()">
                 Sair da conta
             </button>
@@ -133,7 +144,7 @@
                 <h3>📍 Meu Endereço</h3>
                 <button class="close-modal" onclick="window.closeModals()">✕</button>
             </div>
-            <p style="font-size: 0.85rem; color: #777; margin-bottom: 15px;">Este endereço será preenchido automaticamente no seu carrinho de compras (Futuro update).</p>
+            <p style="font-size: 0.85rem; color: #777; margin-bottom: 15px;">Este endereço será preenchido automaticamente no seu carrinho de compras.</p>
             
             <div class="form-group">
                 <label>Rua / Avenida</label>
@@ -216,7 +227,38 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Verifica estado do usuário
+        // =====================================
+        // LÓGICA DO BOTÃO PWA (BAIXAR APP)
+        // =====================================
+        let deferredPrompt;
+        const installContainer = document.getElementById('install-container');
+        const btnInstallApp = document.getElementById('btn-install-app');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Previne o aviso nativo miniatura
+            e.preventDefault();
+            // Guarda o evento para o botão
+            deferredPrompt = e;
+            // Exibe a div do botão "Baixar App"
+            installContainer.style.display = 'block';
+        });
+
+        btnInstallApp.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                // Abre a tela nativa de instalação do Android/iOS
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('App instalado com sucesso!');
+                    installContainer.style.display = 'none'; // Esconde o botão após instalar
+                }
+                deferredPrompt = null;
+            }
+        });
+
+        // =====================================
+        // LÓGICA DE PERFIL E FIREBASE
+        // =====================================
         const loggedCustomer = JSON.parse(localStorage.getItem('loggedCustomer'));
         const isLogged = !!loggedCustomer || localStorage.getItem('isLogged') === 'true';
         let userEmail = loggedCustomer ? loggedCustomer.email : localStorage.getItem('userEmail');
@@ -236,7 +278,6 @@
                 loggedState.style.display = 'block';
 
                 try {
-                    // Busca os dados do cliente no Firebase pelo email
                     const q = query(collection(db, "customers"), where("email", "==", userEmail));
                     const querySnapshot = await getDocs(q);
 
@@ -260,7 +301,7 @@
         }
 
         // =====================================
-        // CONTROLO DE MODAIS
+        // CONTROLE DE MODAIS
         // =====================================
         window.closeModals = () => {
             document.getElementById('address-modal').classList.remove('active');
@@ -294,12 +335,11 @@
             }
 
             try {
-                // Atualiza no banco de dados Firebase
                 await updateDoc(doc(db, "customers", currentUserDocId), {
                     address: { rua, num, bairro, comp }
                 });
                 
-                currentUserData.address = { rua, num, bairro, comp }; // Atualiza local
+                currentUserData.address = { rua, num, bairro, comp }; 
                 alert("Endereço salvo com sucesso!");
                 window.closeModals();
             } catch (error) {
@@ -330,7 +370,6 @@
             }
 
             try {
-                // Se ele tentou trocar o email, verifica se o novo já existe
                 if (newEmail !== userEmail) {
                     const q = query(collection(db, "customers"), where("email", "==", newEmail));
                     const querySnapshot = await getDocs(q);
@@ -340,12 +379,10 @@
                     }
                 }
 
-                // Salva alterações no Firebase
                 await updateDoc(doc(db, "customers", currentUserDocId), {
                     name: name, phone: phone, email: newEmail, password: pass
                 });
 
-                // Atualiza a sessão no navegador do celular
                 userEmail = newEmail; 
                 localStorage.setItem('userEmail', newEmail);
                 localStorage.setItem('userName', name);
@@ -353,7 +390,7 @@
 
                 alert("Dados atualizados com sucesso!");
                 window.closeModals();
-                loadProfile(); // Recarrega os dados na tela
+                loadProfile(); 
                 
             } catch (error) {
                 console.error(error);
