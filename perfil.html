@@ -96,7 +96,7 @@
             </div>
 
             <div class="menu-list">
-                <a class="menu-item" onclick="openAddressModal()">
+                <a class="menu-item" onclick="window.openAddressModal()">
                     <div class="menu-item-left">
                         <span class="menu-icon">📍</span> Endereço de Entrega
                     </div>
@@ -112,7 +112,7 @@
             </div>
 
             <div class="menu-list">
-                <a class="menu-item" onclick="openSettingsModal()">
+                <a class="menu-item" onclick="window.openSettingsModal()">
                     <div class="menu-item-left">
                         <span class="menu-icon">⚙️</span> Configurações da Conta
                     </div>
@@ -120,7 +120,7 @@
                 </a>
             </div>
 
-            <button class="logout-btn" onclick="logoutCustomer()">
+            <button class="logout-btn" onclick="window.logoutCustomer()">
                 Sair da conta
             </button>
         </div>
@@ -131,9 +131,9 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3>📍 Meu Endereço</h3>
-                <button class="close-modal" onclick="closeModals()">✕</button>
+                <button class="close-modal" onclick="window.closeModals()">✕</button>
             </div>
-            <p style="font-size: 0.85rem; color: #777; margin-bottom: 15px;">Este endereço será preenchido automaticamente no seu carrinho de compras.</p>
+            <p style="font-size: 0.85rem; color: #777; margin-bottom: 15px;">Este endereço será preenchido automaticamente no seu carrinho de compras (Futuro update).</p>
             
             <div class="form-group">
                 <label>Rua / Avenida</label>
@@ -153,7 +153,7 @@
                 <label>Complemento (Opcional)</label>
                 <input type="text" id="mod-comp" placeholder="Apto, Bloco, Casa fundos...">
             </div>
-            <button class="btn-primary" onclick="saveAddress()" style="margin-top: 10px;">Salvar Endereço</button>
+            <button class="btn-primary" onclick="window.saveAddress()" style="margin-top: 10px;">Salvar Endereço</button>
         </div>
     </div>
 
@@ -161,7 +161,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3>⚙️ Dados da Conta</h3>
-                <button class="close-modal" onclick="closeModals()">✕</button>
+                <button class="close-modal" onclick="window.closeModals()">✕</button>
             </div>
             
             <div class="form-group">
@@ -180,7 +180,7 @@
                 <label>Senha de Acesso</label>
                 <input type="text" id="mod-pass" placeholder="Digite uma nova senha">
             </div>
-            <button class="btn-primary" onclick="saveSettings()" style="margin-top: 10px;">Salvar Alterações</button>
+            <button class="btn-primary" onclick="window.saveSettings()" style="margin-top: 10px;">Salvar Alterações</button>
         </div>
     </div>
 
@@ -199,48 +199,80 @@
         </a>
     </nav>
 
-    <script>
-        const isLogged = localStorage.getItem('isLogged') === 'true';
-        let userEmail = localStorage.getItem('userEmail');
-        let globalUsers = JSON.parse(localStorage.getItem('globalUsers')) || [];
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, query, where, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        function loadProfile() {
+        // SUA CONFIGURAÇÃO OFICIAL FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyBinV28T4xWvYAnE0Yed1rbsp9dEF_n7Eg",
+            authDomain: "dores-delivery.firebaseapp.com",
+            projectId: "dores-delivery",
+            storageBucket: "dores-delivery.firebasestorage.app",
+            messagingSenderId: "1029498697239",
+            appId: "1:1029498697239:web:3ebc070bbd65048bd9ce52"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Verifica estado do usuário
+        const loggedCustomer = JSON.parse(localStorage.getItem('loggedCustomer'));
+        const isLogged = !!loggedCustomer || localStorage.getItem('isLogged') === 'true';
+        let userEmail = loggedCustomer ? loggedCustomer.email : localStorage.getItem('userEmail');
+
+        let currentUserDocId = null;
+        let currentUserData = null;
+
+        async function loadProfile() {
             const unloggedState = document.getElementById('unlogged-state');
             const loggedState = document.getElementById('logged-state');
 
-            if (!isLogged) {
+            if (!isLogged || !userEmail) {
                 unloggedState.style.display = 'block';
                 loggedState.style.display = 'none';
             } else {
                 unloggedState.style.display = 'none';
                 loggedState.style.display = 'block';
 
-                const user = globalUsers.find(u => u.email === userEmail);
+                try {
+                    // Busca os dados do cliente no Firebase pelo email
+                    const q = query(collection(db, "customers"), where("email", "==", userEmail));
+                    const querySnapshot = await getDocs(q);
 
-                if (user) {
-                    document.getElementById('display-name').innerText = user.name;
-                    document.getElementById('display-email').innerText = user.email;
-                    document.getElementById('display-phone').innerText = user.phone || 'Sem telefone';
-                    document.getElementById('user-avatar').innerText = user.name.charAt(0).toUpperCase();
-                } else {
-                    document.getElementById('display-name').innerText = 'Usuário não encontrado';
+                    if (!querySnapshot.empty) {
+                        querySnapshot.forEach((document) => {
+                            currentUserDocId = document.id;
+                            currentUserData = document.data();
+                        });
+
+                        document.getElementById('display-name').innerText = currentUserData.name;
+                        document.getElementById('display-email').innerText = currentUserData.email;
+                        document.getElementById('display-phone').innerText = currentUserData.phone || 'Sem telefone';
+                        document.getElementById('user-avatar').innerText = currentUserData.name.charAt(0).toUpperCase();
+                    } else {
+                        document.getElementById('display-name').innerText = 'Usuário não encontrado';
+                    }
+                } catch (error) {
+                    console.error("Erro ao carregar perfil:", error);
                 }
             }
         }
 
-        // FUNÇÕES DOS MODAIS
-        function closeModals() {
+        // =====================================
+        // CONTROLO DE MODAIS
+        // =====================================
+        window.closeModals = () => {
             document.getElementById('address-modal').classList.remove('active');
             document.getElementById('settings-modal').classList.remove('active');
-        }
+        };
 
-        function openAddressModal() {
-            const user = globalUsers.find(u => u.email === userEmail);
-            if(user && user.address) {
-                document.getElementById('mod-rua').value = user.address.rua || '';
-                document.getElementById('mod-num').value = user.address.num || '';
-                document.getElementById('mod-bairro').value = user.address.bairro || '';
-                document.getElementById('mod-comp').value = user.address.comp || '';
+        window.openAddressModal = () => {
+            if(currentUserData && currentUserData.address) {
+                document.getElementById('mod-rua').value = currentUserData.address.rua || '';
+                document.getElementById('mod-num').value = currentUserData.address.num || '';
+                document.getElementById('mod-bairro').value = currentUserData.address.bairro || '';
+                document.getElementById('mod-comp').value = currentUserData.address.comp || '';
             } else {
                 document.getElementById('mod-rua').value = '';
                 document.getElementById('mod-num').value = '';
@@ -248,9 +280,9 @@
                 document.getElementById('mod-comp').value = '';
             }
             document.getElementById('address-modal').classList.add('active');
-        }
+        };
 
-        function saveAddress() {
+        window.saveAddress = async () => {
             const rua = document.getElementById('mod-rua').value.trim();
             const num = document.getElementById('mod-num').value.trim();
             const bairro = document.getElementById('mod-bairro').value.trim();
@@ -261,31 +293,32 @@
                 return;
             }
 
-            // Atualiza o banco de dados
-            globalUsers = globalUsers.map(u => {
-                if(u.email === userEmail) {
-                    return { ...u, address: { rua, num, bairro, comp } };
-                }
-                return u;
-            });
+            try {
+                // Atualiza no banco de dados Firebase
+                await updateDoc(doc(db, "customers", currentUserDocId), {
+                    address: { rua, num, bairro, comp }
+                });
+                
+                currentUserData.address = { rua, num, bairro, comp }; // Atualiza local
+                alert("Endereço salvo com sucesso!");
+                window.closeModals();
+            } catch (error) {
+                console.error(error);
+                alert("Erro ao salvar endereço.");
+            }
+        };
 
-            localStorage.setItem('globalUsers', JSON.stringify(globalUsers));
-            alert("Endereço salvo! Ele será usado nas suas próximas compras.");
-            closeModals();
-        }
-
-        function openSettingsModal() {
-            const user = globalUsers.find(u => u.email === userEmail);
-            if(user) {
-                document.getElementById('mod-name').value = user.name;
-                document.getElementById('mod-phone').value = user.phone || '';
-                document.getElementById('mod-email').value = user.email;
-                document.getElementById('mod-pass').value = user.password;
+        window.openSettingsModal = () => {
+            if(currentUserData) {
+                document.getElementById('mod-name').value = currentUserData.name || '';
+                document.getElementById('mod-phone').value = currentUserData.phone || '';
+                document.getElementById('mod-email').value = currentUserData.email || '';
+                document.getElementById('mod-pass').value = currentUserData.password || '';
             }
             document.getElementById('settings-modal').classList.add('active');
-        }
+        };
 
-        function saveSettings() {
+        window.saveSettings = async () => {
             const name = document.getElementById('mod-name').value.trim();
             const phone = document.getElementById('mod-phone').value.trim();
             const newEmail = document.getElementById('mod-email').value.trim();
@@ -296,43 +329,47 @@
                 return;
             }
 
-            // Verifica se o novo e-mail já existe em outra conta
-            if (newEmail !== userEmail) {
-                const emailExists = globalUsers.find(u => u.email === newEmail);
-                if (emailExists) {
-                    alert("Este e-mail já está sendo usado por outra conta.");
-                    return;
+            try {
+                // Se ele tentou trocar o email, verifica se o novo já existe
+                if (newEmail !== userEmail) {
+                    const q = query(collection(db, "customers"), where("email", "==", newEmail));
+                    const querySnapshot = await getDocs(q);
+                    if (!querySnapshot.empty) {
+                        alert("Este e-mail já está sendo usado por outra conta.");
+                        return;
+                    }
                 }
+
+                // Salva alterações no Firebase
+                await updateDoc(doc(db, "customers", currentUserDocId), {
+                    name: name, phone: phone, email: newEmail, password: pass
+                });
+
+                // Atualiza a sessão no navegador do celular
+                userEmail = newEmail; 
+                localStorage.setItem('userEmail', newEmail);
+                localStorage.setItem('userName', name);
+                localStorage.setItem('loggedCustomer', JSON.stringify({ name, email: newEmail, phone }));
+
+                alert("Dados atualizados com sucesso!");
+                window.closeModals();
+                loadProfile(); // Recarrega os dados na tela
+                
+            } catch (error) {
+                console.error(error);
+                alert("Erro ao salvar configurações.");
             }
+        };
 
-            // Atualiza o usuário
-            globalUsers = globalUsers.map(u => {
-                if(u.email === userEmail) {
-                    return { ...u, name: name, phone: phone, email: newEmail, password: pass };
-                }
-                return u;
-            });
-
-            localStorage.setItem('globalUsers', JSON.stringify(globalUsers));
-            
-            // Atualiza a sessão atual se o e-mail mudou
-            userEmail = newEmail; 
-            localStorage.setItem('userEmail', newEmail);
-            localStorage.setItem('userName', name);
-
-            alert("Dados atualizados com sucesso!");
-            closeModals();
-            loadProfile(); // Recarrega os dados na tela
-        }
-
-        function logoutCustomer() {
+        window.logoutCustomer = () => {
             if(confirm("Tem certeza que deseja sair da sua conta?")) {
+                localStorage.removeItem('loggedCustomer');
                 localStorage.setItem('isLogged', 'false');
                 localStorage.removeItem('userEmail');
                 localStorage.removeItem('userName');
                 window.location.href = "index.html";
             }
-        }
+        };
 
         window.onload = loadProfile;
     </script>
