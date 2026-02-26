@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel do Entregador - Dores Delivery</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', sans-serif; }
+        body { background-color: #f4f5f7; color: #333; padding-bottom: 30px; }
+
+        /* HEADER */
+        header { background: #111; padding: 20px; text-align: center; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        header h1 { font-size: 1.2rem; font-weight: 700; color: #ea1d2c; display: flex; align-items: center; gap: 8px; }
+        .btn-sound { background: #333; color: #fff; border: 1px solid #555; padding: 8px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-weight: bold; }
+
+        .container { padding: 15px; max-width: 600px; margin: 0 auto; }
+
+        /* ESTADO VAZIO */
+        .empty-state { text-align: center; padding: 60px 20px; display: none; }
+        .empty-state span { font-size: 3rem; display: block; margin-bottom: 15px; }
+        .empty-state h3 { color: #111; margin-bottom: 10px; font-size: 1.2rem; }
+        .empty-state p { color: #717171; font-size: 0.95rem; line-height: 1.4; }
+
+        /* CARTÃO DE ENTREGA */
+        .delivery-card { background: #fff; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 2px solid #fd7e14; overflow: hidden; animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card-header { background: #fff1e6; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #fcd5b4; color: #d9534f; font-weight: 900; }
+        .order-id { font-size: 1.1rem; }
+
+        .card-body { padding: 15px; }
+        
+        .info-row { margin-bottom: 15px; display: flex; gap: 10px; align-items: flex-start; }
+        .info-icon { font-size: 1.2rem; margin-top: 2px; }
+        .info-text strong { display: block; color: #111; font-size: 1rem; margin-bottom: 3px; }
+        .info-text p { color: #555; font-size: 0.9rem; line-height: 1.4; }
+
+        .items-box { background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px dashed #ccc; margin-bottom: 15px; font-size: 0.85rem; color: #555; }
+        .items-box ul { list-style: none; padding-left: 0; }
+        .items-box li { margin-bottom: 4px; }
+
+        .payment-box { background: #e6f4ea; border: 1px solid #badbcc; color: #0f5132; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; margin-bottom: 15px; }
+        .payment-box .total { font-size: 1.2rem; font-weight: 900; }
+
+        .btn-deliver { width: 100%; background: #00a14b; color: #fff; border: none; padding: 18px; border-radius: 8px; font-weight: 900; font-size: 1.1rem; cursor: pointer; transition: background 0.2s; text-transform: uppercase; }
+        .btn-deliver:active { transform: scale(0.98); background: #0b7a3d; }
+
+        /* ABA DE CONCLUÍDOS (Histórico do dia) */
+        .history-title { font-size: 1rem; color: #777; margin: 30px 0 15px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+        .history-card { background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; opacity: 0.7; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🛵 Dores Entregas</h1>
+        <button class="btn-sound" onclick="unlockAudio()">🔊 Ativar Alerta</button>
+    </header>
+
+    <main class="container">
+        
+        <div id="empty-state" class="empty-state">
+            <span>☕</span>
+            <h3>Nenhuma entrega pendente</h3>
+            <p>Aguarde. Quando uma loja despachar um pedido, ele aparecerá aqui automaticamente.</p>
+        </div>
+
+        <div id="active-deliveries">
+            </div>
+
+        <h3 class="history-title" id="history-title" style="display:none;">✅ Entregas Concluídas Hoje</h3>
+        <div id="history-deliveries">
+            </div>
+
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, query, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // SUA CONFIGURAÇÃO OFICIAL
+        const firebaseConfig = {
+            apiKey: "AIzaSyBinV28T4xWvYAnE0Yed1rbsp9dEF_n7Eg",
+            authDomain: "dores-delivery.firebaseapp.com",
+            projectId: "dores-delivery",
+            storageBucket: "dores-delivery.firebasestorage.app",
+            messagingSenderId: "1029498697239",
+            appId: "1:1029498697239:web:3ebc070bbd65048bd9ce52"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // ==========================================
+        // SISTEMA DE ALERTA SONORO
+        // ==========================================
+        let audioUnlocked = false;
+        let previousDeliveryCount = -1;
+
+        window.unlockAudio = () => {
+            audioUnlocked = true;
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                ctx.resume().then(() => alert("Som ativado! Deixe a tela aberta."));
+            } catch(e) {}
+        };
+
+        function playDeliveryAlert() {
+            if (!audioUnlocked) return;
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'triangle'; 
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.setValueAtTime(1200, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.5, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.5);
+            } catch (e) { console.log("Som bloqueado."); }
+        }
+
+        // ==========================================
+        // ESCUTAR PEDIDOS NO FIREBASE (TEMPO REAL)
+        // ==========================================
+        // Busca TODOS os pedidos. Vamos filtrar no JavaScript para evitar erros de índice na nuvem.
+        const qOrders = query(collection(db, "orders"));
+
+        onSnapshot(qOrders, (snapshot) => {
+            const allOrders = [];
+            snapshot.forEach(document => allOrders.push({ id: document.id, ...document.data() }));
+
+            // Separa os que estão para entrega
+            const activeDeliveries = allOrders.filter(o => o.status === "Saiu para Entrega");
+            
+            // Toca alarme se chegou entrega nova
+            if (previousDeliveryCount !== -1 && activeDeliveries.length > previousDeliveryCount) {
+                playDeliveryAlert();
+            }
+            previousDeliveryCount = activeDeliveries.length;
+
+            // Separa os que já foram concluídos HOJE
+            const todayDate = new Date().toLocaleDateString('pt-BR');
+            const historyDeliveries = allOrders.filter(o => o.status === "Concluído" || o.status === "Concluido");
+            const historyToday = historyDeliveries.filter(o => {
+                try {
+                    return o.date.split(' ')[0] === todayDate;
+                } catch(e) { return false; }
+            });
+
+            renderDeliveries(activeDeliveries, historyToday);
+        });
+
+        function renderDeliveries(active, history) {
+            const containerActive = document.getElementById('active-deliveries');
+            const emptyState = document.getElementById('empty-state');
+            
+            // RENDERIZA ENTREGAS ATIVAS
+            if (active.length === 0) {
+                emptyState.style.display = 'block';
+                containerActive.innerHTML = '';
+            } else {
+                emptyState.style.display = 'none';
+                
+                containerActive.innerHTML = active.sort((a,b) => a.timestamp - b.timestamp).map(order => {
+                    const shortId = order.id.substring(0, 6).toUpperCase();
+                    
+                    // Lista de itens resumida
+                    const itemsHtml = order.items.map(i => `<li><b>${i.qty}x</b> ${i.name}</li>`).join('');
+                    
+                    return `
+                    <div class="delivery-card">
+                        <div class="card-header">
+                            <span class="order-id">Pedido #${shortId}</span>
+                            <span>${order.date.split(' ')[1] || ''}</span>
+                        </div>
+                        <div class="card-body">
+                            
+                            <div class="info-row">
+                                <div class="info-icon">🏪</div>
+                                <div class="info-text">
+                                    <strong>Retirar em: ${order.storeName}</strong>
+                                </div>
+                            </div>
+
+                            <div class="info-row">
+                                <div class="info-icon">📍</div>
+                                <div class="info-text">
+                                    <strong>Entregar para: ${order.customerName}</strong>
+                                    <p>${order.customer.address}</p>
+                                </div>
+                            </div>
+
+                            <div class="items-box">
+                                <strong>Itens do pedido:</strong>
+                                <ul>${itemsHtml}</ul>
+                            </div>
+
+                            <div class="payment-box">
+                                <div>
+                                    <div style="font-size:0.75rem; color:#555;">Pagamento</div>
+                                    <div>${order.paymentMethod}</div>
+                                </div>
+                                <div class="total">
+                                    R$ ${order.total.toFixed(2)}
+                                </div>
+                            </div>
+
+                            <button class="btn-deliver" onclick="window.confirmDelivery('${order.id}', '${order.customerName}')">
+                                ✅ Confirmar Entrega
+                            </button>
+                        </div>
+                    </div>`;
+                }).join('');
+            }
+
+            // RENDERIZA HISTÓRICO
+            const containerHistory = document.getElementById('history-deliveries');
+            const titleHistory = document.getElementById('history-title');
+            
+            if (history.length > 0) {
+                titleHistory.style.display = 'block';
+                containerHistory.innerHTML = history.sort((a,b) => b.timestamp - a.timestamp).map(order => {
+                    const shortId = order.id.substring(0, 6).toUpperCase();
+                    return `
+                    <div class="history-card">
+                        <div>
+                            <strong>#${shortId}</strong> - ${order.customerName}<br>
+                            <span style="font-size:0.8rem; color:#777;">${order.storeName}</span>
+                        </div>
+                        <div style="color:#00a14b; font-weight:bold;">
+                            Entregue
+                        </div>
+                    </div>`;
+                }).join('');
+            } else {
+                titleHistory.style.display = 'none';
+                containerHistory.innerHTML = '';
+            }
+        }
+
+        // ==========================================
+        // MARCAR COMO ENTREGUE
+        // ==========================================
+        window.confirmDelivery = async (orderId, customerName) => {
+            if(confirm(`Tem certeza que já entregou o pedido ao cliente ${customerName}?`)) {
+                try {
+                    await updateDoc(doc(db, "orders", orderId), { 
+                        status: "Concluído" 
+                    });
+                    // O Firebase emite um evento e a tela se atualiza sozinha
+                } catch(error) {
+                    console.error("Erro ao atualizar:", error);
+                    alert("Ocorreu um erro de conexão. Tente novamente.");
+                }
+            }
+        };
+
+    </script>
+</body>
+</html>
