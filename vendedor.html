@@ -68,8 +68,11 @@
         .pay-card { background: #eef4ff; color: #084298; border: 1px solid #b6d4fe; }
         .pay-pix { background: #fdf5e6; color: #997404; border: 1px solid #f9e1b5; }
         .order-total { font-size: 1.2rem; font-weight: 900; text-align: right; margin-bottom: 10px; }
-        .btn-action { width: 100%; padding: 10px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: #fff; }
-        .btn-accept { background: #00a14b; } .btn-dispatch { background: #0d6efd; }
+        .btn-action { width: 100%; padding: 10px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: #fff; margin-bottom: 5px; transition: 0.2s;}
+        .btn-action:active { transform: scale(0.98); }
+        .btn-accept { background: #00a14b; } 
+        .btn-dispatch { background: #0d6efd; }
+        .btn-call-driver { background: #8e44ad; } /* Roxo para destacar */
 
         /* LAYOUT MEU CARDÁPIO */
         .menu-layout { display: flex; gap: 20px; height: calc(100% - 60px); }
@@ -274,11 +277,11 @@
                     <div id="list-pendente"></div>
                 </div>
                 <div class="kanban-col">
-                    <div class="col-header">Em Preparo / Rota <span class="col-count" id="count-preparo">0</span></div>
+                    <div class="col-header">Em Preparo <span class="col-count" id="count-preparo">0</span></div>
                     <div id="list-preparo"></div>
                 </div>
                 <div class="kanban-col">
-                    <div class="col-header">Prontos / Entregues <span class="col-count" id="count-concluido">0</span></div>
+                    <div class="col-header">Saiu / Concluído <span class="col-count" id="count-concluido">0</span></div>
                     <div id="list-concluido"></div>
                 </div>
             </div>
@@ -576,7 +579,7 @@
         };
 
         // ==========================================
-        // 3. KANBAN DE PEDIDOS (TEMPO REAL FIREBASE)
+        // 3. KANBAN DE PEDIDOS E VERIFICAÇÃO DE NOVOS
         // ==========================================
         const qOrders = query(collection(db, "orders"), where("storeId", "==", loggedStore.id));
 
@@ -599,8 +602,8 @@
             myOrders.sort((a, b) => b.timestamp - a.timestamp).forEach(order => {
                 const cardHTML = buildOrderCard(order);
                 if(order.status === 'Pendente') { colPendente.innerHTML += cardHTML; cPend++; } 
-                else if(order.status === 'Em Preparo' || order.status === 'Saiu para Entrega') { colPreparo.innerHTML += cardHTML; cPrep++; } 
-                else if(order.status === 'Concluído') { colConcluido.innerHTML += cardHTML; cConc++; }
+                else if(order.status === 'Em Preparo') { colPreparo.innerHTML += cardHTML; cPrep++; } 
+                else if(order.status === 'Saiu para Entrega' || order.status === 'Concluído') { colConcluido.innerHTML += cardHTML; cConc++; }
             });
             
             document.getElementById('count-pendente').innerText = cPend; 
@@ -629,15 +632,24 @@
             } 
             else if (order.status === 'Em Preparo') { 
                 actionBtn = `
-                <div style="display:flex; gap:8px;">
-                    <button class="btn-action" style="flex:1; background:#f59e0b; font-size:0.8rem; padding:10px 5px;" onclick="window.updateOrderStatus('${order.id}', 'Saiu para Entrega')">🛵 Saiu p/ Entrega</button>
-                    <button class="btn-action btn-dispatch" style="flex:1; font-size:0.8rem; padding:10px 5px;" onclick="window.updateOrderStatus('${order.id}', 'Concluído')">✅ Entregue</button>
+                <div style="display:flex; flex-direction:column; gap:5px;">
+                    <div style="display:flex; gap:5px;">
+                        <button class="btn-action" style="background:#f59e0b; flex:1;" onclick="window.updateOrderStatus('${order.id}', 'Saiu para Entrega')">Entregar</button>
+                        <button class="btn-action btn-dispatch" style="flex:1;" onclick="window.updateOrderStatus('${order.id}', 'Concluído')">Concluir</button>
+                    </div>
+                    <button class="btn-action btn-call-driver" onclick="window.updateOrderStatus('${order.id}', 'Aguardando Entregador')">🛵 Chamar Entregador</button>
                 </div>`; 
             }
             else if (order.status === 'Saiu para Entrega') {
                 actionBtn = `
                 <div style="text-align:center; margin-bottom: 8px; font-size: 0.9rem; color: #f59e0b; font-weight: bold;">🛵 Saiu para Entrega</div>
                 <button class="btn-action btn-dispatch" onclick="window.updateOrderStatus('${order.id}', 'Concluído')">✅ Marcar como Entregue</button>`;
+            }
+            else if (order.status === 'Aguardando Entregador') {
+                actionBtn = `<div style="text-align:center; padding:10px; color:#8e44ad; font-weight:bold;">Aguardando o entregador aceitar a corrida...</div>`;
+            }
+            else if (order.status === 'Concluído') {
+                actionBtn = `<div style="text-align:center; color:#00a14b; font-weight:bold; font-size:0.9rem;">Finalizado</div>`;
             }
             
             const shortId = order.id.substring(0, 6).toUpperCase();
