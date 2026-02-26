@@ -274,7 +274,7 @@
                     <div id="list-pendente"></div>
                 </div>
                 <div class="kanban-col">
-                    <div class="col-header">Em Preparo <span class="col-count" id="count-preparo">0</span></div>
+                    <div class="col-header">Em Preparo / Rota <span class="col-count" id="count-preparo">0</span></div>
                     <div id="list-preparo"></div>
                 </div>
                 <div class="kanban-col">
@@ -599,7 +599,7 @@
             myOrders.sort((a, b) => b.timestamp - a.timestamp).forEach(order => {
                 const cardHTML = buildOrderCard(order);
                 if(order.status === 'Pendente') { colPendente.innerHTML += cardHTML; cPend++; } 
-                else if(order.status === 'Em Preparo') { colPreparo.innerHTML += cardHTML; cPrep++; } 
+                else if(order.status === 'Em Preparo' || order.status === 'Saiu para Entrega') { colPreparo.innerHTML += cardHTML; cPrep++; } 
                 else if(order.status === 'Concluído') { colConcluido.innerHTML += cardHTML; cConc++; }
             });
             
@@ -624,8 +624,21 @@
             else { paymentBadge = `<div class="payment-box pay-card">💳 ${payMethodText}</div>`; }
             
             let actionBtn = '';
-            if (order.status === 'Pendente') { actionBtn = `<button class="btn-action btn-accept" onclick="window.updateOrderStatus('${order.id}', 'Em Preparo')">Aceitar Pedido</button>`; } 
-            else if (order.status === 'Em Preparo') { actionBtn = `<button class="btn-action btn-dispatch" onclick="window.updateOrderStatus('${order.id}', 'Concluído')">Marcar como Entregue</button>`; }
+            if (order.status === 'Pendente') { 
+                actionBtn = `<button class="btn-action btn-accept" onclick="window.updateOrderStatus('${order.id}', 'Em Preparo')">Aceitar Pedido</button>`; 
+            } 
+            else if (order.status === 'Em Preparo') { 
+                actionBtn = `
+                <div style="display:flex; gap:8px;">
+                    <button class="btn-action" style="flex:1; background:#f59e0b; font-size:0.8rem; padding:10px 5px;" onclick="window.updateOrderStatus('${order.id}', 'Saiu para Entrega')">🛵 Saiu p/ Entrega</button>
+                    <button class="btn-action btn-dispatch" style="flex:1; font-size:0.8rem; padding:10px 5px;" onclick="window.updateOrderStatus('${order.id}', 'Concluído')">✅ Entregue</button>
+                </div>`; 
+            }
+            else if (order.status === 'Saiu para Entrega') {
+                actionBtn = `
+                <div style="text-align:center; margin-bottom: 8px; font-size: 0.9rem; color: #f59e0b; font-weight: bold;">🛵 Motoqueiro a caminho</div>
+                <button class="btn-action btn-dispatch" onclick="window.updateOrderStatus('${order.id}', 'Concluído')">✅ Marcar como Entregue</button>`;
+            }
             
             const shortId = order.id.substring(0, 6).toUpperCase();
 
@@ -737,7 +750,7 @@
         let globalProducts = [];
         let myCategories = ['Geral', 'Destaques'];
 
-        // Escuta os dados gerais da Loja (Para puxar as Categorias)
+        // Escuta os dados gerais da Loja para puxar as categorias
         onSnapshot(doc(db, "stores", loggedStore.id), (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
@@ -748,7 +761,7 @@
             }
         });
 
-        // Escuta os Produtos da Loja
+        // Escuta os Produtos da Loja na Nuvem
         const qProducts = query(collection(db, "products"), where("storeId", "==", loggedStore.id));
         onSnapshot(qProducts, (snapshot) => {
             globalProducts = [];
