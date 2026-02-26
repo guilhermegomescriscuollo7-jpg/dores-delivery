@@ -197,6 +197,41 @@
         .top-stats { text-align: right; font-size: 0.85rem; color: #777; display: flex; flex-direction: column; }
         .top-stats strong { color: #00a14b; font-size: 1.1rem; margin-top: 2px; }
 
+        /* =========================================================
+           RESPONSIVIDADE (MOBILE E TELAS MENORES)
+           ========================================================= */
+        @media (max-width: 850px) {
+            body { flex-direction: column; overflow-y: auto; height: auto; }
+            .sidebar { width: 100%; border-right: none; border-bottom: 2px solid #eee; display: flex; flex-direction: column; height: auto; flex-shrink: 0; }
+            .store-header { padding: 15px; display: flex; flex-direction: column; align-items: center; }
+            .nav-menu { display: flex; flex-direction: row; overflow-x: auto; margin-top: 0; white-space: nowrap; padding-bottom: 5px; }
+            .nav-item { padding: 12px 15px; border-left: none; border-bottom: 3px solid transparent; }
+            .nav-item.active { border-left: none; border-bottom: 3px solid #ea1d2c; }
+            .btn-logout { margin: 10px; padding: 10px; }
+            
+            .main-content { padding: 15px; height: auto; overflow: visible; }
+            .kanban-board { display: flex; flex-direction: column; height: auto; gap: 15px; }
+            .kanban-col { height: auto; max-height: none; }
+            
+            .menu-layout { flex-direction: column; height: auto; }
+            .menu-list-area { height: auto; max-height: 400px; }
+            .menu-edit-area { width: 100%; height: auto; margin-top: 15px; }
+            
+            .editor-top { flex-direction: column; align-items: center; text-align: center; }
+            .top-fields { width: 100%; text-align: left; }
+            .card-header-flex { flex-direction: column; align-items: flex-start; gap: 10px; }
+            
+            .toast-notification { right: 10px; top: 10px; width: calc(100% - 20px); }
+            
+            .mod-modal-content { width: 95%; height: 95vh; padding: 0; }
+            .mod-header { flex-direction: column; gap: 10px; align-items: flex-start; }
+            .mod-header-actions { width: 100%; justify-content: space-between; flex-wrap: wrap; }
+            .mod-cat-header-drag { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .mod-cat-title-input { width: 100%; }
+            .mod-rule-group { flex-direction: column; align-items: flex-start; gap: 5px; margin-bottom: 10px; }
+            .mod-opt-row { flex-wrap: wrap; }
+            .mod-opt-input-group { width: 100%; flex: unset; }
+        }
     </style>
 </head>
 <body>
@@ -226,10 +261,10 @@
         </div>
 
         <section id="pedidos" class="section active">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 25px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom: 25px;">
                 <h2 style="margin:0;">Pedidos em Tempo Real</h2>
                 <button onclick="window.requestNotificationPermission()" style="background:#eef4ff; color:#0d6efd; border:1px solid #b6d4fe; padding:8px 15px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.85rem;">
-                    Ativar Alertas de Áudio e Pop-up
+                    Ativar Alertas de Áudio
                 </button>
             </div>
             
@@ -434,7 +469,7 @@
         if (!loggedStore) { window.location.href = 'login-vendedor.html'; }
 
         document.getElementById('ui-store-name').innerText = loggedStore.name;
-        document.getElementById('ui-store-logo').src = loggedStore.logo;
+        document.getElementById('ui-store-logo').src = loggedStore.logo || 'https://via.placeholder.com/80';
         
         window.updateStatusBtn = () => {
             const btn = document.getElementById('btn-toggle-status');
@@ -684,11 +719,12 @@
         };
 
         // ==========================================
-        // 4. GESTÃO DO CARDÁPIO (TEMPO REAL FIREBASE)
+        // 4. GESTÃO DO CARDÁPIO E CATEGORIAS
         // ==========================================
         let currentEditingId = null; let editorImageBase64 = ''; let currentPriceType = 'simples'; let editingVariants = []; let editingModifiers = []; 
         let globalProducts = [];
 
+        // Recupera produtos em tempo real da nuvem
         const qProducts = query(collection(db, "products"), where("storeId", "==", loggedStore.id));
         onSnapshot(qProducts, (snapshot) => {
             globalProducts = [];
