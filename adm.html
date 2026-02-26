@@ -31,7 +31,7 @@
         .item-list { margin-top: 20px; display: grid; grid-template-columns: 1fr; gap: 15px; }
         .card-item { border: 1px solid #eee; padding: 15px; border-radius: 8px; display: flex; align-items: center; gap: 15px; background: #fff; }
         .card-item.suspended { background: #fff0f0; border-color: #fbd5d5; } 
-        .card-img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; background: #eee; border: 2px solid #ddd; }
+        .card-img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; background: #eee; border: 2px solid #ddd; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;}
         
         .actions-col { display: flex; gap: 15px; margin-left: auto; align-items: center; }
         .btn-edit { color: #0d6efd; border: none; background: none; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
@@ -51,6 +51,7 @@
         <div class="sidebar-header">⚙️ Admin Dores</div>
         <ul class="nav-menu">
             <li class="nav-item active" onclick="window.switchTab('lojas', this)">🏪 Lojas Parceiras</li>
+            <li class="nav-item" onclick="window.switchTab('entregadores', this)">🛵 Entregadores</li>
             <li class="nav-item" onclick="window.switchTab('banners', this)">🖼️ Banners Home</li>
         </ul>
     </aside>
@@ -90,8 +91,38 @@
             <button class="btn" id="btn-save-store" onclick="window.saveStore()">Registrar Loja</button>
             <button class="btn-secondary" id="btn-cancel-edit" onclick="window.cancelEdit()">Cancelar Edição</button>
             
-            <h3 style="margin-top: 40px; font-size: 1rem; border-bottom: 1px solid #eee; padding-bottom: 10px;">Lojas Cadastradas (Gerenciar Assinaturas)</h3>
+            <h3 style="margin-top: 40px; font-size: 1rem; border-bottom: 1px solid #eee; padding-bottom: 10px;">Lojas Cadastradas</h3>
             <div class="item-list" id="store-list-container"></div>
+        </section>
+
+        <section id="entregadores" class="section">
+            <h2 id="form-driver-title">Cadastrar Entregador</h2>
+            <div class="form-group">
+                <label>Nome Completo</label>
+                <input type="text" id="d-name" placeholder="Ex: Carlos Silva">
+            </div>
+            
+            <div class="form-group">
+                <label>WhatsApp / Telefone</label>
+                <input type="tel" id="d-phone" placeholder="Ex: (37) 99999-9999">
+            </div>
+
+            <div style="display: flex; gap: 15px;">
+                <div class="form-group" style="flex: 1;">
+                    <label>E-mail (Login do Entregador)</label>
+                    <input type="email" id="d-email" placeholder="entregador@email.com">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>Senha de Acesso</label>
+                    <input type="text" id="d-pass" placeholder="Senha do app de entregas"> 
+                </div>
+            </div>
+            
+            <button class="btn" id="btn-save-driver" onclick="window.saveDriver()">Registrar Entregador</button>
+            <button class="btn-secondary" id="btn-cancel-driver-edit" onclick="window.cancelEditDriver()">Cancelar Edição</button>
+            
+            <h3 style="margin-top: 40px; font-size: 1rem; border-bottom: 1px solid #eee; padding-bottom: 10px;">Entregadores Cadastrados</h3>
+            <div class="item-list" id="driver-list-container"></div>
         </section>
 
         <section id="banners" class="section">
@@ -128,10 +159,12 @@
 
         // VARIÁVEIS DE ESTADO
         let allStores = [];
+        let allDrivers = [];
         let globalBanners = [];
         let storeImgBase64 = '';
         let bannerImgBase64 = '';
         let editingStoreId = null;
+        let editingDriverId = null;
 
         // --- SISTEMA DE ABAS ---
         window.switchTab = (tabId, el) => {
@@ -153,7 +186,6 @@
             }
         });
 
-        // Carrega Banners em Tempo Real
         onSnapshot(collection(db, "banners"), (snapshot) => {
             globalBanners = [];
             snapshot.forEach(doc => globalBanners.push({ id: doc.id, ...doc.data() }));
@@ -196,7 +228,6 @@
             }
         });
 
-        // Carrega Lojas em Tempo Real
         onSnapshot(collection(db, "stores"), (snapshot) => {
             allStores = [];
             snapshot.forEach(doc => allStores.push({ id: doc.id, ...doc.data() }));
@@ -266,7 +297,6 @@
             document.getElementById('btn-cancel-edit').style.display = "none";
         };
 
-        // Suspender/Reativar por pagamento
         window.toggleSubscription = async (id) => {
             const store = allStores.find(s => s.id === id);
             if (store) {
@@ -277,10 +307,7 @@
 
         window.deleteStore = async (id) => {
             if(confirm("Tem certeza que deseja apagar esta loja PERMANENTEMENTE?\n\nIsso também apagará todos os produtos dela!")) {
-                // Deleta a loja
                 await deleteDoc(doc(db, "stores", id));
-                
-                // Busca e deleta todos os produtos vinculados à loja
                 const q = query(collection(db, "products"), where("storeId", "==", id));
                 const querySnapshot = await getDocs(q);
                 querySnapshot.forEach(async (document) => {
@@ -299,9 +326,9 @@
                 const isActive = s.isActive !== false; 
                 const cardClass = isActive ? 'card-item' : 'card-item suspended';
                 const badgeClass = isActive ? 'badge-status badge-active' : 'badge-status badge-suspended';
-                const badgeText = isActive ? '✅ Assinatura Ativa' : '❌ Falta de Pagamento';
+                const badgeText = isActive ? '✅ Ativa' : '❌ Bloqueada';
                 const toggleBtnClass = isActive ? 'btn-suspend' : 'btn-reactivate';
-                const toggleBtnText = isActive ? '⏸️ Suspender' : '▶️ Reativar';
+                const toggleBtnText = isActive ? '⏸️ Bloquear' : '▶️ Desbloquear';
 
                 return `
                 <div class="${cardClass}">
@@ -316,6 +343,118 @@
                         <button class="${toggleBtnClass}" onclick="window.toggleSubscription('${s.id}')">${toggleBtnText}</button>
                         <span style="color:#ddd;">|</span>
                         <button class="btn-del" onclick="window.deleteStore('${s.id}')">🗑️ Apagar</button>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        // ==========================================
+        // MÓDULO ENTREGADORES
+        // ==========================================
+        onSnapshot(collection(db, "drivers"), (snapshot) => {
+            allDrivers = [];
+            snapshot.forEach(doc => allDrivers.push({ id: doc.id, ...doc.data() }));
+            renderDriverList();
+        });
+
+        window.saveDriver = async () => {
+            const name = document.getElementById('d-name').value.trim();
+            const phone = document.getElementById('d-phone').value.trim();
+            const email = document.getElementById('d-email').value.trim();
+            const pass = document.getElementById('d-pass').value.trim();
+            
+            if(!name || !email || !pass || !phone) return alert("Preencha todos os dados do entregador.");
+            
+            if (editingDriverId) {
+                const emailExists = allDrivers.find(d => d.email === email && d.id !== editingDriverId);
+                if(emailExists) return alert("Já existe outro entregador usando este e-mail.");
+
+                await updateDoc(doc(db, "drivers", editingDriverId), { name, phone, email, password: pass });
+                alert("Entregador atualizado com sucesso!");
+            } else {
+                const emailExists = allDrivers.find(d => d.email === email);
+                if(emailExists) return alert("Já existe um entregador com este e-mail.");
+
+                await addDoc(collection(db, "drivers"), {
+                    name, phone, email, password: pass, isActive: true
+                });
+                alert("Entregador cadastrado com sucesso!");
+            }
+            window.cancelEditDriver();
+        };
+
+        window.editDriver = (id) => {
+            editingDriverId = id;
+            const driver = allDrivers.find(d => d.id === id);
+            if(!driver) return;
+            
+            document.getElementById('d-name').value = driver.name;
+            document.getElementById('d-phone').value = driver.phone;
+            document.getElementById('d-email').value = driver.email;
+            document.getElementById('d-pass').value = driver.password;
+
+            document.getElementById('form-driver-title').innerText = "Editar Entregador";
+            document.getElementById('btn-save-driver').innerText = "Salvar Alterações";
+            document.getElementById('btn-save-driver').style.backgroundColor = "#0d6efd"; 
+            document.getElementById('btn-cancel-driver-edit').style.display = "inline-block";
+            document.querySelector('.main-content').scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        window.cancelEditDriver = () => {
+            editingDriverId = null;
+            document.getElementById('d-name').value = '';
+            document.getElementById('d-phone').value = '';
+            document.getElementById('d-email').value = '';
+            document.getElementById('d-pass').value = '';
+            
+            document.getElementById('form-driver-title').innerText = "Cadastrar Entregador";
+            document.getElementById('btn-save-driver').innerText = "Registrar Entregador";
+            document.getElementById('btn-save-driver').style.backgroundColor = "#ea1d2c"; 
+            document.getElementById('btn-cancel-driver-edit').style.display = "none";
+        };
+
+        window.toggleDriverStatus = async (id) => {
+            const driver = allDrivers.find(d => d.id === id);
+            if (driver) {
+                const newStatus = driver.isActive === false ? true : false;
+                await updateDoc(doc(db, "drivers", id), { isActive: newStatus });
+            }
+        };
+
+        window.deleteDriver = async (id) => {
+            if(confirm("Tem certeza que deseja remover este entregador do sistema?")) {
+                await deleteDoc(doc(db, "drivers", id));
+            }
+        };
+
+        function renderDriverList() {
+            const container = document.getElementById('driver-list-container');
+            if(allDrivers.length === 0) {
+                container.innerHTML = `<p style="font-size:0.85rem; color:#999;">Nenhum entregador cadastrado.</p>`;
+                return;
+            }
+            container.innerHTML = allDrivers.map(d => {
+                const isActive = d.isActive !== false; 
+                const cardClass = isActive ? 'card-item' : 'card-item suspended';
+                const badgeClass = isActive ? 'badge-status badge-active' : 'badge-status badge-suspended';
+                const badgeText = isActive ? '✅ Liberado' : '❌ Bloqueado';
+                const toggleBtnClass = isActive ? 'btn-suspend' : 'btn-reactivate';
+                const toggleBtnText = isActive ? '⏸️ Bloquear' : '▶️ Desbloquear';
+
+                return `
+                <div class="${cardClass}">
+                    <div class="card-img">🛵</div>
+                    <div style="flex-grow: 1;">
+                        <strong style="font-size: 1.1rem; color: #111;">${d.name}</strong><br>
+                        <span style="font-size:0.85rem; color:#555;">📞 ${d.phone} | ✉️ ${d.email} | 🔑 ${d.password}</span><br>
+                        <span class="${badgeClass}">${badgeText}</span>
+                    </div>
+                    <div class="actions-col">
+                        <button class="btn-edit" onclick="window.editDriver('${d.id}')">✏️ Editar</button>
+                        <button class="${toggleBtnClass}" onclick="window.toggleDriverStatus('${d.id}')">${toggleBtnText}</button>
+                        <span style="color:#ddd;">|</span>
+                        <button class="btn-del" onclick="window.deleteDriver('${d.id}')">🗑️ Apagar</button>
                     </div>
                 </div>
                 `;
