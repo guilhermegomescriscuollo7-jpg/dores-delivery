@@ -35,7 +35,7 @@
         .btn-install:active { transform: scale(0.95); }
 
         /* =========================================================
-           SPLASH SCREEN (TELA DE ABERTURA)
+           SPLASH SCREEN E PATROCINADOR
            ========================================================= */
         #splash-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -49,6 +49,25 @@
         @keyframes pulseSplash { 0% { transform: scale(0.95); } 100% { transform: scale(1.05); } }
         .splash-swoosh { width: 60px; height: auto; transform: rotate(-10deg); }
         .splash-text { font-size: 2.5rem; font-weight: 700; color: #ea1d2c; letter-spacing: -1.5px; margin: 0; }
+
+        /* Estrutura base da tela de patrocinador */
+        #sponsor-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #fff; z-index: 99998;
+            display: flex; align-items: center; justify-content: center;
+            pointer-events: none; /* Não clica até ativar */
+        }
+        #sponsor-screen img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* CLASSES DINÂMICAS DE EFEITOS GERADAS PELO ADMIN */
+        .effect-fade { opacity: 0; transition: opacity 0.6s ease; }
+        .effect-fade.active { opacity: 1; pointer-events: auto; }
+
+        .effect-zoom { opacity: 0; transform: scale(0.8); transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1); }
+        .effect-zoom.active { opacity: 1; transform: scale(1); pointer-events: auto; }
+
+        .effect-slide { transform: translateY(100%); transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1); }
+        .effect-slide.active { transform: translateY(0); pointer-events: auto; }
 
         /* =========================================================
            CABEÇALHO
@@ -188,6 +207,9 @@
             <h1 class="splash-text">Dores Delivery</h1>
         </div>
     </div>
+
+    <div id="sponsor-screen">
+        </div>
 
     <div class="brand-header">
         <div class="brand-logo-container">
@@ -387,7 +409,6 @@
             }
         });
 
-        // Tenta registrar o Service Worker se suportado
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js').then(registration => {
@@ -399,20 +420,71 @@
         }
         
         // ==========================================
-        // INICIALIZAÇÃO E SPLASH SCREEN
+        // INICIALIZAÇÃO, SPLASH SCREEN E PATROCINADOR DINÂMICO
         // ==========================================
+        let currentSponsor = null;
+
+        // 1. Ouve a nuvem para pegar a configuração do patrocinador atual ANTES da tela abrir
+        onSnapshot(collection(db, "sponsors"), (snapshot) => {
+            const sponsors = [];
+            snapshot.forEach(doc => sponsors.push(doc.data()));
+            
+            if (sponsors.length > 0) {
+                // Pega o último adicionado
+                sponsors.sort((a,b) => b.timestamp - a.timestamp);
+                currentSponsor = sponsors[0];
+            } else {
+                currentSponsor = null;
+            }
+        });
+
+        // 2. Controla o tempo da abertura
         window.addEventListener('load', () => {
+            // A logo Dores Delivery fica 1.5s na tela
             setTimeout(() => {
                 const splash = document.getElementById('splash-screen');
+                const sponsorDiv = document.getElementById('sponsor-screen');
+                
                 if (splash) {
-                    splash.classList.add('hidden');
-                    setTimeout(() => splash.style.display = 'none', 500); 
+                    splash.classList.add('hidden'); // Faz o fade out da logo inicial
+                    
+                    // Espera 0.5s para a logo sumir totalmente
+                    setTimeout(() => { 
+                        splash.style.display = 'none'; 
+                        
+                        // Executa a inteligência do Patrocinador se ele existir na base de dados
+                        if(currentSponsor && sponsorDiv) {
+                            const effectClass = `effect-${currentSponsor.transition || 'fade'}`;
+                            const durationMs = (currentSponsor.duration || 2) * 1000;
+                            
+                            // Injeta a imagem e a classe do efeito
+                            sponsorDiv.innerHTML = `<img src="${currentSponsor.image}" alt="Patrocinador">`;
+                            sponsorDiv.className = effectClass;
+                            
+                            // Força o navegador a reconhecer a classe antes de ativar
+                            void sponsorDiv.offsetWidth; 
+                            
+                            // Ativa o efeito para ele aparecer
+                            sponsorDiv.classList.add('active');
+                            
+                            // Aguarda o tempo configurado pelo Admin
+                            setTimeout(() => {
+                                sponsorDiv.classList.remove('active'); // Inicia a saída
+                                
+                                // Remove do ecrã após a animação (0.6s)
+                                setTimeout(() => sponsorDiv.style.display = 'none', 600); 
+                            }, durationMs); 
+                        }
+                    }, 500); 
                 }
-            }, 1500);
+            }, 1500); 
+            
             window.updateCartBadge();
         });
 
+        // ==========================================
         // 1. CARREGAR BANNERS (TEMPO REAL)
+        // ==========================================
         onSnapshot(collection(db, "banners"), (snapshot) => {
             const track = document.getElementById('banner-track');
             const wrapper = document.getElementById('banner-wrapper');
