@@ -53,6 +53,7 @@
             <li class="nav-item active" onclick="window.switchTab('lojas', this)">🏪 Lojas Parceiras</li>
             <li class="nav-item" onclick="window.switchTab('entregadores', this)">🛵 Entregadores</li>
             <li class="nav-item" onclick="window.switchTab('banners', this)">🖼️ Banners Home</li>
+            <li class="nav-item" onclick="window.switchTab('patrocinadores', this)">🌟 Patrocinadores</li>
         </ul>
     </aside>
 
@@ -138,6 +139,20 @@
             <h3 style="margin-top: 30px; font-size: 1rem;">Banners Ativos</h3>
             <div class="item-list" id="banner-list-container" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));"></div>
         </section>
+
+        <section id="patrocinadores" class="section">
+            <h2>Patrocinador da Abertura (Splash Screen)</h2>
+            <p style="font-size:0.85rem; color:#777; margin-bottom:15px;">Esta imagem aparecerá em tela cheia logo após a logo inicial. Se houver mais de uma, o aplicativo pegará a mais recente adicionada.</p>
+            
+            <div class="form-group">
+                <label>Imagem do Patrocinador (Formato vertical - celular)</label>
+                <input type="file" id="sp-image" accept="image/*">
+            </div>
+            <button class="btn" onclick="window.saveSponsor()">Salvar Imagem de Abertura</button>
+
+            <h3 style="margin-top: 30px; font-size: 1rem;">Imagens de Patrocinadores</h3>
+            <div class="item-list" id="sponsor-list-container" style="grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));"></div>
+        </section>
     </main>
 
     <script type="module">
@@ -161,8 +176,12 @@
         let allStores = [];
         let allDrivers = [];
         let globalBanners = [];
+        let globalSponsors = [];
+        
         let storeImgBase64 = '';
         let bannerImgBase64 = '';
+        let sponsorImgBase64 = '';
+        
         let editingStoreId = null;
         let editingDriverId = null;
 
@@ -172,6 +191,57 @@
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             el.classList.add('active');
+        };
+
+        // ==========================================
+        // MÓDULO DE PATROCINADORES (NOVO)
+        // ==========================================
+        document.getElementById('sp-image').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) { sponsorImgBase64 = evt.target.result; };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        onSnapshot(collection(db, "sponsors"), (snapshot) => {
+            globalSponsors = [];
+            snapshot.forEach(doc => globalSponsors.push({ id: doc.id, ...doc.data() }));
+            // Ordenar por timestamp para manter o mais novo primeiro
+            globalSponsors.sort((a,b) => b.timestamp - a.timestamp);
+            renderSponsors();
+        });
+
+        window.saveSponsor = async () => {
+            if(!sponsorImgBase64) return alert("Selecione uma imagem!");
+            await addDoc(collection(db, "sponsors"), { 
+                image: sponsorImgBase64,
+                timestamp: Date.now()
+            });
+            sponsorImgBase64 = '';
+            document.getElementById('sp-image').value = '';
+            alert("Imagem de patrocinador adicionada com sucesso!");
+        };
+
+        function renderSponsors() {
+            const container = document.getElementById('sponsor-list-container');
+            container.innerHTML = globalSponsors.map((s, index) => {
+                const isCurrent = index === 0 ? '<span style="background:#00a14b; color:white; padding:2px 5px; font-size:0.7rem; border-radius:4px; margin-bottom:5px; display:inline-block;">PATROCINADOR ATUAL</span>' : '';
+                return `
+                <div class="card-item" style="flex-direction:column; align-items:flex-start; width: 100%; max-width: 180px;">
+                    ${isCurrent}
+                    <img src="${s.image}" style="width:100%; height:200px; object-fit:cover; border-radius:6px; border: 1px solid #ccc;">
+                    <button class="btn-del" onclick="window.deleteSponsor('${s.id}')" style="margin-left:0; margin-top:10px;">Excluir Imagem</button>
+                </div>
+            `;
+            }).join('');
+        }
+
+        window.deleteSponsor = async (id) => {
+            if(confirm("Remover este patrocinador da tela de abertura?")) {
+                await deleteDoc(doc(db, "sponsors", id));
+            }
         };
 
         // ==========================================
