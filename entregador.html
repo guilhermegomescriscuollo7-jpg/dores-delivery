@@ -12,7 +12,8 @@
         /* HEADER */
         header { background: #111; padding: 20px; text-align: center; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         header h1 { font-size: 1.2rem; font-weight: 700; color: #ea1d2c; display: flex; align-items: center; gap: 8px; }
-        .btn-sound { background: #333; color: #fff; border: 1px solid #555; padding: 8px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-weight: bold; }
+        .btn-sound { background: #333; color: #fff; border: 1px solid #555; padding: 8px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-weight: bold; transition: 0.2s;}
+        .btn-sound:active { transform: scale(0.95); }
 
         .container { padding: 15px; max-width: 600px; margin: 0 auto; }
 
@@ -47,19 +48,24 @@
         .btn-deliver:active { transform: scale(0.98); background: #0b7a3d; }
 
         /* ABA DE CONCLUÍDOS (Histórico do dia) */
-        .history-title { font-size: 1rem; color: #777; margin: 30px 0 15px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+        .history-title { font-size: 1rem; color: #777; margin: 30px 0 15px; border-bottom: 1px solid #ddd; padding-bottom: 5px; display: flex; justify-content: space-between; align-items: center;}
         .history-card { background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; opacity: 0.7; }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>🛵 Dores Entregas</h1>
-        <button class="btn-sound" onclick="unlockAudio()">🔊 Ativar Alerta</button>
+        <h1>🛵 Entregas</h1>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn-sound" onclick="window.unlockAudio()">🔊 Som</button>
+            <button class="btn-sound" style="background: #ea1d2c; border-color: #c81824;" onclick="window.logoutDriver()">Sair</button>
+        </div>
     </header>
 
     <main class="container">
         
+        <div id="driver-welcome" style="margin-bottom: 20px; font-weight: bold; color: #555;"></div>
+
         <div id="empty-state" class="empty-state">
             <span>☕</span>
             <h3>Nenhuma entrega pendente</h3>
@@ -69,7 +75,10 @@
         <div id="active-deliveries">
             </div>
 
-        <h3 class="history-title" id="history-title" style="display:none;">✅ Entregas Concluídas Hoje</h3>
+        <h3 class="history-title" id="history-title" style="display:none;">
+            ✅ Entregas Concluídas Hoje
+            <span id="history-count" style="background:#ea1d2c; color:#fff; padding:2px 8px; border-radius:12px; font-size:0.8rem;">0</span>
+        </h3>
         <div id="history-deliveries">
             </div>
 
@@ -79,7 +88,30 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, query, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // SUA CONFIGURAÇÃO OFICIAL
+        // ==========================================
+        // 1. TRAVA DE SEGURANÇA (VERIFICA LOGIN)
+        // ==========================================
+        const loggedDriverStr = localStorage.getItem('loggedDriver');
+        
+        // Se não existir sessão, expulsa de volta para o login
+        if (!loggedDriverStr) {
+            window.location.href = "login-entregador.html";
+        }
+        
+        // Se existir, converte o texto para objeto
+        const loggedDriver = JSON.parse(loggedDriverStr);
+        document.getElementById('driver-welcome').innerText = `Olá, ${loggedDriver.name}! Boas entregas.`;
+
+        window.logoutDriver = () => {
+            if (confirm("Tem certeza que deseja encerrar seu turno e sair?")) {
+                localStorage.removeItem('loggedDriver');
+                window.location.href = "login-entregador.html";
+            }
+        };
+
+        // ==========================================
+        // 2. CONFIGURAÇÃO OFICIAL DO FIREBASE
+        // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyBinV28T4xWvYAnE0Yed1rbsp9dEF_n7Eg",
             authDomain: "dores-delivery.firebaseapp.com",
@@ -93,7 +125,7 @@
         const db = getFirestore(app);
 
         // ==========================================
-        // SISTEMA DE ALERTA SONORO
+        // 3. SISTEMA DE ALERTA SONORO
         // ==========================================
         let audioUnlocked = false;
         let previousDeliveryCount = -1;
@@ -102,7 +134,7 @@
             audioUnlocked = true;
             try {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                ctx.resume().then(() => alert("Som ativado! Deixe a tela aberta."));
+                ctx.resume().then(() => alert("Som ativado! Deixe a tela aberta para ouvir os alertas."));
             } catch(e) {}
         };
 
@@ -125,9 +157,8 @@
         }
 
         // ==========================================
-        // ESCUTAR PEDIDOS NO FIREBASE (TEMPO REAL)
+        // 4. ESCUTAR PEDIDOS NO FIREBASE (TEMPO REAL)
         // ==========================================
-        // Busca TODOS os pedidos. Vamos filtrar no JavaScript para evitar erros de índice na nuvem.
         const qOrders = query(collection(db, "orders"));
 
         onSnapshot(qOrders, (snapshot) => {
@@ -221,9 +252,11 @@
             // RENDERIZA HISTÓRICO
             const containerHistory = document.getElementById('history-deliveries');
             const titleHistory = document.getElementById('history-title');
+            const countHistory = document.getElementById('history-count');
             
             if (history.length > 0) {
-                titleHistory.style.display = 'block';
+                titleHistory.style.display = 'flex';
+                countHistory.innerText = history.length;
                 containerHistory.innerHTML = history.sort((a,b) => b.timestamp - a.timestamp).map(order => {
                     const shortId = order.id.substring(0, 6).toUpperCase();
                     return `
@@ -244,7 +277,7 @@
         }
 
         // ==========================================
-        // MARCAR COMO ENTREGUE
+        // 5. MARCAR COMO ENTREGUE
         // ==========================================
         window.confirmDelivery = async (orderId, customerName) => {
             if(confirm(`Tem certeza que já entregou o pedido ao cliente ${customerName}?`)) {
