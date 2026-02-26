@@ -22,16 +22,7 @@
             align-items: center;
             font-size: 0.9rem;
         }
-        .btn-install {
-            background: #ea1d2c;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.2s;
-        }
+        .btn-install { background: #ea1d2c; color: white; border: none; padding: 8px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .btn-install:active { transform: scale(0.95); }
 
         /* =========================================================
@@ -50,13 +41,18 @@
         .splash-swoosh { width: 60px; height: auto; transform: rotate(-10deg); }
         .splash-text { font-size: 2.5rem; font-weight: 700; color: #ea1d2c; letter-spacing: -1.5px; margin: 0; }
 
-        /* Tela do Patrocinador (Inicia escondida para não bugar a tela) */
-        #sponsor-screen {
+        /* Fundo branco que bloqueia a visão do app até os patrocínios acabarem */
+        #sponsor-wrapper {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #fff; z-index: 99998;
-            align-items: center; justify-content: center;
+            display: none; align-items: center; justify-content: center;
         }
-        #sponsor-screen img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Container apenas para a imagem receber o efeito */
+        #sponsor-content {
+            width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+        }
+        #sponsor-content img { width: 100%; height: 100%; object-fit: cover; }
 
         /* Efeitos Dinâmicos do Patrocinador */
         .effect-fade { opacity: 0; transition: opacity 0.6s ease; }
@@ -95,15 +91,9 @@
         /* =========================================================
            CATEGORIAS
            ========================================================= */
-        .button-scroll-container { 
-            display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 12px; padding: 15px; 
-            background: #f8f8f8; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; width: 100%;
-        }
+        .button-scroll-container { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 12px; padding: 15px; background: #f8f8f8; scrollbar-width: none; -webkit-overflow-scrolling: touch; width: 100%; }
         .button-scroll-container::-webkit-scrollbar { display: none; }
-        .button-item { 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fff; padding: 12px 5px; border-radius: 16px; text-align: center; 
-            cursor: pointer; border: 2px solid transparent; transition: all 0.3s ease; flex: 0 0 auto; width: 85px; box-shadow: 0 2px 5px rgba(0,0,0,0.03); 
-        }
+        .button-item { display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fff; padding: 12px 5px; border-radius: 16px; text-align: center; cursor: pointer; border: 2px solid transparent; transition: all 0.3s ease; flex: 0 0 auto; width: 85px; box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
         .button-item:active { transform: scale(0.95); }
         .filter-icon { width: 32px; height: 32px; margin-bottom: 8px; color: #ea1d2c; transition: color 0.3s ease; }
         .button-item span { font-size: 0.75rem; color: #717171; font-weight: 600; line-height: 1.1; transition: color 0.3s ease; white-space: nowrap;}
@@ -207,8 +197,9 @@
         </div>
     </div>
 
-    <div id="sponsor-screen" style="display: none;">
-        </div>
+    <div id="sponsor-wrapper">
+        <div id="sponsor-content"></div>
+    </div>
 
     <div class="brand-header">
         <div class="brand-logo-container">
@@ -242,63 +233,43 @@
 
     <section class="button-scroll-container" id="category-filters">
         <div class="button-item active" onclick="window.filterCategory('Todos', this)">
-            <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon">
-                <path d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z"/>
-            </svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon"><path d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z"/></svg>
             <span>Todos</span>
         </div>
         <div class="button-item" onclick="window.filterCategory('Restaurantes', this)">
-            <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon">
-                <path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/>
-            </svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg>
             <span>Restaurantes</span>
         </div>
         <div class="button-item" onclick="window.filterCategory('Lanches', this)">
-            <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon">
-                <path d="M21.99 10.93c-.15-2.92-2.31-5.38-5.18-5.83C15.22 4.41 13.68 4 12 4s-3.22.41-4.81 1.1c-2.87.45-5.03 2.91-5.18 5.83H2v2h2v4c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-4h2v-2h-.01zM18 17H6v-4h12v4z"/>
-            </svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon"><path d="M21.99 10.93c-.15-2.92-2.31-5.38-5.18-5.83C15.22 4.41 13.68 4 12 4s-3.22.41-4.81 1.1c-2.87.45-5.03 2.91-5.18 5.83H2v2h2v4c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-4h2v-2h-.01zM18 17H6v-4h12v4z"/></svg>
             <span>Lanches</span>
         </div>
         <div class="button-item" onclick="window.filterCategory('Bares', this)">
-            <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon">
-                <path d="M21 5V3H3v2l8 9v5H6v2h12v-2h-5v-5l8-9zM7.43 7L5.66 5h12.69l-1.78 2H7.43z"/>
-            </svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon"><path d="M21 5V3H3v2l8 9v5H6v2h12v-2h-5v-5l8-9zM7.43 7L5.66 5h12.69l-1.78 2H7.43z"/></svg>
             <span>Bares</span>
         </div>
         <div class="button-item" onclick="window.filterCategory('Sorveterias', this)">
-            <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon">
-                <path d="M12 2C8.69 2 6 4.69 6 8c0 3.08 2.31 5.64 5.25 5.95V22h1.5v-8.05C15.69 13.64 18 11.08 18 8c0-3.31-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/>
-            </svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon"><path d="M12 2C8.69 2 6 4.69 6 8c0 3.08 2.31 5.64 5.25 5.95V22h1.5v-8.05C15.69 13.64 18 11.08 18 8c0-3.31-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/></svg>
             <span>Sorveterias</span>
         </div>
         <div class="button-item" onclick="window.filterCategory('Mercados', this)">
-            <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon">
-                <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/>
-            </svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
             <span>Mercados</span>
         </div>
         <div class="button-item" onclick="window.filterCategory('Farmácias', this)">
-            <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon">
-                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
-            </svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
             <span>Farmácias</span>
         </div>
         <div class="button-item" onclick="window.filterCategory('Loja de Roupas', this)">
-            <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon">
-                <path d="M21.99 8c0-.72-.37-1.35-.94-1.7L12 1 2.95 6.3C2.38 6.65 2 7.28 2 8v2h2v11h16V10h2V8zM12 3.19l7 3.91V8h-2v11H7V8H5V7.1l7-3.91z"/>
-            </svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon"><path d="M21.99 8c0-.72-.37-1.35-.94-1.7L12 1 2.95 6.3C2.38 6.65 2 7.28 2 8v2h2v11h16V10h2V8zM12 3.19l7 3.91V8h-2v11H7V8H5V7.1l7-3.91z"/></svg>
             <span>Moda</span>
         </div>
         <div class="button-item" onclick="window.filterCategory('Açougue', this)">
-            <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon">
-                <path d="M20.5 3.5l-6 6c-.39-.39-1.02-.39-1.41 0L3.5 19.09l1.41 1.41 9.59-9.59c.39.39 1.02.39 1.41 0l6-6V3.5h-1.41z"/>
-            </svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon"><path d="M20.5 3.5l-6 6c-.39-.39-1.02-.39-1.41 0L3.5 19.09l1.41 1.41 9.59-9.59c.39.39 1.02.39 1.41 0l6-6V3.5h-1.41z"/></svg>
             <span>Açougue</span>
         </div>
         <div class="button-item" onclick="window.filterCategory('Utilidades', this)">
-            <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon">
-                <path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/>
-            </svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon"><path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/></svg>
             <span>Utilidades</span>
         </div>
     </section>
@@ -327,7 +298,6 @@
             </div>
             <textarea class="obs-textarea" id="p-modal-obs" rows="3" maxlength="140" placeholder="Ex: tirar a cebola..." oninput="window.updateObsCount()"></textarea>
         </div>
-        
         <div class="bottom-action-bar">
             <div class="qty-controls">
                 <button class="qty-btn" onclick="window.changeQty(-1)">-</button>
@@ -342,18 +312,9 @@
     </div>
 
     <nav class="bottom-nav">
-        <a href="index.html" class="nav-link active">
-            <img src="https://cdn-icons-png.flaticon.com/512/25/25694.png" class="nav-icon-img" alt="Início">
-            <span>Início</span>
-        </a>
-        <a href="pedidos.html" class="nav-link">
-            <img src="https://cdn-icons-png.flaticon.com/512/1150/1150592.png" class="nav-icon-img" alt="Pedidos">
-            <span>Pedidos</span>
-        </a>
-        <a href="perfil.html" class="nav-link">
-            <img src="https://cdn-icons-png.flaticon.com/512/1077/1077063.png" class="nav-icon-img" alt="Perfil">
-            <span>Perfil</span>
-        </a>
+        <a href="index.html" class="nav-link active"><img src="https://cdn-icons-png.flaticon.com/512/25/25694.png" class="nav-icon-img" alt="Início"><span>Início</span></a>
+        <a href="pedidos.html" class="nav-link"><img src="https://cdn-icons-png.flaticon.com/512/1150/1150592.png" class="nav-icon-img" alt="Pedidos"><span>Pedidos</span></a>
+        <a href="perfil.html" class="nav-link"><img src="https://cdn-icons-png.flaticon.com/512/1077/1077063.png" class="nav-icon-img" alt="Perfil"><span>Perfil</span></a>
     </nav>
 
     <script type="module">
@@ -372,13 +333,9 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        let allStores = [];
-        let currentStoreProducts = [];
-        let activeProduct = null;
+        let allStores = []; let currentStoreProducts = []; let activeProduct = null;
         let activeStore = { name: '', logo: '', status: '' };
-        let prodQty = 1;
-        let basePriceCalc = 0;
-        let currentCategoryFilter = null; 
+        let prodQty = 1; let basePriceCalc = 0; let currentCategoryFilter = null; 
         let cart = JSON.parse(localStorage.getItem('cart')) || [];
 
         // ==========================================
@@ -387,85 +344,77 @@
         let deferredPrompt;
         const installBanner = document.getElementById('install-banner');
         const installBtn = document.getElementById('btn-install-app');
-
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            installBanner.style.display = 'flex';
-        });
-
-        installBtn.addEventListener('click', async () => {
-            installBanner.style.display = 'none';
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') { console.log('Instalado'); }
-                deferredPrompt = null;
-            }
-        });
-
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Falhou:', err));
-            });
-        }
+        window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; installBanner.style.display = 'flex'; });
+        installBtn.addEventListener('click', async () => { installBanner.style.display = 'none'; if (deferredPrompt) { deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt = null; } });
+        if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Falhou:', err)); }); }
         
         // ==========================================
         // LÓGICA DO PATROCINADOR E SPLASH SCREEN
         // ==========================================
-        let currentSponsor = null;
+        let allActiveSponsors = [];
 
-        // Ouve a nuvem para pegar a configuração do patrocinador
+        // Ouve a nuvem para pegar as configurações do patrocinador ANTES da logo inicial sumir
         onSnapshot(collection(db, "sponsors"), (snapshot) => {
-            const sponsors = [];
-            snapshot.forEach(doc => sponsors.push(doc.data()));
-            
-            if (sponsors.length > 0) {
-                // Pega o último adicionado
-                sponsors.sort((a,b) => b.timestamp - a.timestamp);
-                currentSponsor = sponsors[0];
-            } else {
-                currentSponsor = null;
-            }
+            allActiveSponsors = [];
+            snapshot.forEach(doc => allActiveSponsors.push(doc.data()));
+            // Organiza na ordem que foram criados
+            allActiveSponsors.sort((a,b) => a.timestamp - b.timestamp);
         });
 
-        // Controla o tempo de abertura
         window.addEventListener('load', () => {
-            // A logo principal fica 1.5s na tela
             setTimeout(() => {
                 const splash = document.getElementById('splash-screen');
-                const sponsorDiv = document.getElementById('sponsor-screen');
+                const sponsorWrapper = document.getElementById('sponsor-wrapper');
+                const sponsorContent = document.getElementById('sponsor-content');
                 
                 if (splash) {
-                    splash.classList.add('hidden'); // Faz a logo sumir
+                    // SE EXISTIR PATROCINADOR, JÁ DEIXA A TELA DE FUNDO DELES PRONTA (branca) ANTES DA LOGO SUMIR
+                    if(allActiveSponsors.length > 0 && sponsorWrapper) {
+                        sponsorWrapper.style.display = 'flex';
+                    }
+
+                    splash.classList.add('hidden'); // Faz a logo da Dores Delivery sumir
                     
-                    // Espera 0.5s para sumir de vez da tela
                     setTimeout(() => { 
                         splash.style.display = 'none'; 
                         
-                        // Se existir um Patrocinador, mostra ele agora!
-                        if(currentSponsor && sponsorDiv) {
-                            sponsorDiv.style.display = 'flex'; // Destrava a tela dele
-                            const effectClass = `effect-${currentSponsor.transition || 'fade'}`;
-                            const durationMs = (currentSponsor.duration || 2) * 1000;
-                            
-                            sponsorDiv.innerHTML = `<img src="${currentSponsor.image}" alt="Patrocinador">`;
-                            sponsorDiv.className = effectClass; 
-                            
-                            // Truque de 50 milisegundos pro CSS aplicar os estilos antes de animar
-                            setTimeout(() => {
-                                sponsorDiv.classList.add('active'); // O efeito acontece aqui
+                        // Executa a inteligência dos Patrocinadores
+                        if(allActiveSponsors.length > 0 && sponsorWrapper) {
+                            let indexAtual = 0;
+
+                            function mostrarProximoPatrocinador() {
+                                // Se já mostrou todos, esconde a tela branca suavemente para revelar o app
+                                if (indexAtual >= allActiveSponsors.length) {
+                                    sponsorWrapper.style.transition = "opacity 0.5s ease";
+                                    sponsorWrapper.style.opacity = "0";
+                                    setTimeout(() => sponsorWrapper.style.display = 'none', 500);
+                                    return;
+                                }
+
+                                const spAtual = allActiveSponsors[indexAtual];
+                                const classEfeito = `effect-${spAtual.transition || 'fade'}`;
+                                const tempoMs = (spAtual.duration || 2) * 1000;
                                 
-                                // Oculta o Patrocinador depois dos X segundos escolhidos
+                                sponsorContent.className = classEfeito; 
+                                sponsorContent.innerHTML = `<img src="${spAtual.image}" alt="Patrocinador">`;
+                                
+                                void sponsorContent.offsetWidth; // Força o navegador a reconhecer o CSS antes de animar
+                                sponsorContent.classList.add('active'); // Inicia a animação de ENTRADA
+                                
                                 setTimeout(() => {
-                                    sponsorDiv.classList.remove('active'); 
-                                    setTimeout(() => sponsorDiv.style.display = 'none', 600); // Tira da frente
-                                }, durationMs); 
-                            }, 50);
+                                    sponsorContent.classList.remove('active'); // Inicia a animação de SAÍDA
+                                    setTimeout(() => {
+                                        indexAtual++;
+                                        mostrarProximoPatrocinador(); // Chama o próximo da fila
+                                    }, 600); // Tempo da animação de saída terminar
+                                }, tempoMs); 
+                            }
+                            
+                            mostrarProximoPatrocinador(); 
                         }
-                    }, 500); 
+                    }, 500); // Tempo que a logo Dores Delivery demora para sumir (0.5s)
                 }
-            }, 1500); 
+            }, 1500); // Tempo que a logo inicial fica visível (1.5s)
             
             window.updateCartBadge();
         });
