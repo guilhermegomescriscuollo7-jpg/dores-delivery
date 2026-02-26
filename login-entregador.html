@@ -11,8 +11,7 @@
 
         .login-box { background: #fff; padding: 40px 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); width: 100%; max-width: 400px; text-align: center; }
         
-        .logo-area { margin-bottom: 25px; }
-        .logo-area .icon { font-size: 3.5rem; display: block; margin-bottom: 10px; }
+        .logo-area { margin-bottom: 25px; display: flex; flex-direction: column; align-items: center; }
         .logo-area h1 { font-size: 1.5rem; color: #111; font-weight: 900; }
         .logo-area p { font-size: 0.9rem; color: #777; margin-top: 5px; }
 
@@ -23,11 +22,11 @@
         .form-group { margin-bottom: 15px; text-align: left; }
         .form-group label { display: block; font-size: 0.85rem; color: #555; font-weight: 500; margin-bottom: 6px; }
         .form-group input { width: 100%; padding: 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; outline: none; background: #f9f9f9; transition: 0.2s; }
-        .form-group input:focus { border-color: #00a14b; background: #fff; }
+        .form-group input:focus { border-color: #ea1d2c; background: #fff; }
 
-        /* Botão verde para destacar que é o app do Entregador */
-        .btn-primary { width: 100%; background: #00a14b; color: #fff; border: none; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.2s; margin-top: 10px; }
-        .btn-primary:hover { background: #0b7a3d; }
+        /* Botão vermelho principal */
+        .btn-primary { width: 100%; background: #ea1d2c; color: #fff; border: none; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.2s; margin-top: 10px; }
+        .btn-primary:hover { background: #c81824; }
         .btn-primary:active { transform: scale(0.98); }
         .btn-primary:disabled { background: #ccc; cursor: not-allowed; }
 
@@ -39,7 +38,12 @@
 
     <div class="login-box">
         <div class="logo-area">
-            <span class="icon">🛵</span>
+            <svg width="90" height="65" viewBox="0 0 100 70" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-bottom: 10px;">
+                <path d="M28 28 C 32 16, 42 16, 46 28" stroke="#ea1d2c" stroke-width="6" stroke-linecap="round" fill="none"/>
+                <path d="M54 28 C 58 16, 68 16, 72 28" stroke="#ea1d2c" stroke-width="6" stroke-linecap="round" fill="none"/>
+                <path d="M15 45 Q 50 75 85 45" stroke="#ea1d2c" stroke-width="8" stroke-linecap="round" fill="none"/>
+            </svg>
+            
             <h1>Portal do Entregador</h1>
             <p>Dores Delivery</p>
         </div>
@@ -48,7 +52,7 @@
 
         <form id="login-form">
             <div class="form-group">
-                <label>E-mail de Acesso</label>
+                <label>Email do entregador</label>
                 <input type="email" id="email" placeholder="Digite seu e-mail" required>
             </div>
             <div class="form-group">
@@ -56,7 +60,7 @@
                 <input type="password" id="pass" placeholder="Sua senha" required>
             </div>
             
-            <button type="submit" class="btn-primary" id="btn-login">Entrar nas Entregas</button>
+            <button type="submit" class="btn-primary" id="btn-login">Entrar</button>
         </form>
 
         <a href="index.html" class="back-link">← Voltar para a página inicial</a>
@@ -120,7 +124,7 @@
                     showAlert("❌ E-mail ou senha incorretos.", "error");
                     document.getElementById('pass').value = '';
                     btnLogin.disabled = false;
-                    btnLogin.innerText = "Entrar nas Entregas";
+                    btnLogin.innerText = "Entrar";
                     return;
                 }
 
@@ -137,7 +141,7 @@
                 if (driverData.isActive === false) {
                     showAlert("⚠️ O seu acesso foi bloqueado pelo administrador.", "error");
                     btnLogin.disabled = false;
-                    btnLogin.innerText = "Entrar nas Entregas";
+                    btnLogin.innerText = "Entrar";
                     return;
                 }
 
@@ -155,7 +159,7 @@
                 console.error("Erro no login:", error);
                 showAlert("❌ Erro de conexão com o servidor. Tente novamente.", "error");
                 btnLogin.disabled = false;
-                btnLogin.innerText = "Entrar nas Entregas";
+                btnLogin.innerText = "Entrar";
             }
         });
     </script>
