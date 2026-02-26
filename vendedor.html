@@ -34,7 +34,7 @@
            ALERTA DE NOVO PEDIDO (TOAST)
            ========================================================= */
         .toast-notification {
-            position: absolute; top: 30px; right: -400px; width: 320px;
+            position: fixed; top: 30px; right: -400px; width: 320px;
             background: #fff; border-left: 6px solid #00a14b; border-radius: 8px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.15); padding: 20px;
             display: flex; align-items: center; gap: 15px; z-index: 9999;
@@ -221,7 +221,7 @@
             .top-fields { width: 100%; text-align: left; }
             .card-header-flex { flex-direction: column; align-items: flex-start; gap: 10px; }
             
-            .toast-notification { right: 10px; top: 10px; width: calc(100% - 20px); }
+            .toast-notification { position: fixed; right: 10px; top: 10px; width: calc(100% - 20px); }
             
             .mod-modal-content { width: 95%; height: 95vh; padding: 0; }
             .mod-header { flex-direction: column; gap: 10px; align-items: flex-start; }
@@ -466,7 +466,12 @@
         // 1. INICIALIZAÇÃO E AVISOS SONOROS
         // ==========================================
         const loggedStore = JSON.parse(localStorage.getItem('loggedStore'));
-        if (!loggedStore) { window.location.href = 'login-vendedor.html'; }
+        
+        // Verifica se a loja está corretamente logada com ID, se não, força novo login
+        if (!loggedStore || !loggedStore.id) { 
+            localStorage.removeItem('loggedStore');
+            window.location.href = 'login-vendedor.html'; 
+        }
 
         document.getElementById('ui-store-name').innerText = loggedStore.name;
         document.getElementById('ui-store-logo').src = loggedStore.logo || 'https://via.placeholder.com/80';
@@ -486,7 +491,9 @@
             loggedStore.status = newStatus;
             localStorage.setItem('loggedStore', JSON.stringify(loggedStore));
             window.updateStatusBtn();
-            await updateDoc(doc(db, "stores", loggedStore.id), { status: newStatus });
+            try {
+                await updateDoc(doc(db, "stores", loggedStore.id), { status: newStatus });
+            } catch(e) { console.error("Erro ao atualizar status", e) }
         };
 
         let previousOrderCount = -1;
@@ -628,7 +635,9 @@
         }
         
         window.updateOrderStatus = async (orderId, newStatus) => {
-            await updateDoc(doc(db, "orders", orderId), { status: newStatus });
+            try {
+                await updateDoc(doc(db, "orders", orderId), { status: newStatus });
+            } catch(e) { console.error("Erro ao atualizar status", e); }
         };
 
         // ==========================================
@@ -794,7 +803,7 @@
                 
                 globalProducts.forEach(async (p) => {
                     if (p.category === catName) {
-                        await updateDoc(doc(db, "products", p.id), { category: 'Geral' });
+                        try { await updateDoc(doc(db, "products", p.id), { category: 'Geral' }); } catch(e){}
                     }
                 });
                 if (document.getElementById('ed-category').value === catName) document.getElementById('ed-category').value = 'Geral';
@@ -890,8 +899,10 @@
         window.deleteEditingProduct = async () => {
             if(!currentEditingId) return;
             if(confirm("Apagar este produto permanentemente?")) {
-                await deleteDoc(doc(db, "products", currentEditingId));
-                window.clearEditor();
+                try {
+                    await deleteDoc(doc(db, "products", currentEditingId));
+                    window.clearEditor();
+                } catch(e) { console.error("Erro ao deletar", e); }
             }
         };
 
