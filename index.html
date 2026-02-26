@@ -35,7 +35,7 @@
         .btn-install:active { transform: scale(0.95); }
 
         /* =========================================================
-           SPLASH SCREEN (TELA DE ABERTURA)
+           SPLASH SCREEN E PATROCINADOR
            ========================================================= */
         #splash-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -49,6 +49,16 @@
         @keyframes pulseSplash { 0% { transform: scale(0.95); } 100% { transform: scale(1.05); } }
         .splash-swoosh { width: 60px; height: auto; transform: rotate(-10deg); }
         .splash-text { font-size: 2.5rem; font-weight: 700; color: #ea1d2c; letter-spacing: -1.5px; margin: 0; }
+
+        #sponsor-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #fff; z-index: 99998;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+        #sponsor-screen.active { opacity: 1; visibility: visible; pointer-events: auto; }
+        #sponsor-screen img { width: 100%; height: 100%; object-fit: cover; }
 
         /* =========================================================
            CABEÇALHO
@@ -187,6 +197,10 @@
             </svg>
             <h1 class="splash-text">Dores Delivery</h1>
         </div>
+    </div>
+
+    <div id="sponsor-screen">
+        <img src="PATROCINADO.jpg" alt="Patrocinador Dores Delivery">
     </div>
 
     <div class="brand-header">
@@ -387,7 +401,6 @@
             }
         });
 
-        // Tenta registrar o Service Worker se suportado
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js').then(registration => {
@@ -399,14 +412,29 @@
         }
         
         // ==========================================
-        // INICIALIZAÇÃO E SPLASH SCREEN
+        // INICIALIZAÇÃO E SPLASH SCREEN + PATROCINADOR
         // ==========================================
         window.addEventListener('load', () => {
             setTimeout(() => {
                 const splash = document.getElementById('splash-screen');
+                const sponsor = document.getElementById('sponsor-screen');
+                
                 if (splash) {
-                    splash.classList.add('hidden');
-                    setTimeout(() => splash.style.display = 'none', 500); 
+                    splash.classList.add('hidden'); // Começa a sumir
+                    
+                    setTimeout(() => { 
+                        splash.style.display = 'none'; 
+                        
+                        // Mostra patrocinador
+                        if(sponsor) {
+                            sponsor.classList.add('active'); // Esmaece e aparece
+                            setTimeout(() => {
+                                sponsor.classList.remove('active'); // Tira após 2s
+                                setTimeout(() => sponsor.style.display = 'none', 500); // Exclui do HTML
+                            }, 2000); 
+                        }
+                        
+                    }, 500); 
                 }
             }, 1500);
             window.updateCartBadge();
