@@ -10,87 +10,41 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', sans-serif; }
         body { background-color: #f8f8f8; color: #3e3e3e; padding-bottom: 110px; overflow-x: hidden; }
 
-        /* =========================================================
-           BOTÃO DE INSTALAR APP (PWA)
-           ========================================================= */
-        #install-banner {
-            display: none;
-            background: #111;
-            color: #fff;
-            padding: 12px 20px;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.9rem;
-        }
+        #install-banner { display: none; background: #111; color: #fff; padding: 12px 20px; justify-content: space-between; align-items: center; font-size: 0.9rem; }
         .btn-install { background: #ea1d2c; color: white; border: none; padding: 8px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .btn-install:active { transform: scale(0.95); }
 
-        /* =========================================================
-           SPLASH SCREEN E PATROCINADOR
-           ========================================================= */
-        #splash-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #fff; z-index: 99999;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: opacity 0.5s ease, visibility 0.5s ease;
-        }
+        #splash-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s ease, visibility 0.5s ease; }
         #splash-screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-        
         .splash-logo-container { display: flex; align-items: center; gap: 12px; animation: pulseSplash 1.5s ease-in-out infinite alternate; }
         @keyframes pulseSplash { 0% { transform: scale(0.95); } 100% { transform: scale(1.05); } }
         .splash-swoosh { width: 60px; height: auto; transform: rotate(-10deg); }
         .splash-text { font-size: 2.5rem; font-weight: 700; color: #ea1d2c; letter-spacing: -1.5px; margin: 0; }
 
-        /* Fundo branco que bloqueia a visão do app até os patrocínios acabarem */
-        #sponsor-wrapper {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #fff; z-index: 99998;
-            display: none; align-items: center; justify-content: center;
-        }
-
-        /* Container apenas para a imagem receber o efeito */
-        #sponsor-content {
-            width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
-        }
+        #sponsor-wrapper { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 99998; display: none; align-items: center; justify-content: center; }
+        #sponsor-content { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
         #sponsor-content img { width: 100%; height: 100%; object-fit: cover; }
-
-        /* Efeitos Dinâmicos do Patrocinador */
         .effect-fade { opacity: 0; transition: opacity 0.6s ease; }
         .effect-fade.active { opacity: 1; }
-
         .effect-zoom { opacity: 0; transform: scale(0.8); transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1); }
         .effect-zoom.active { opacity: 1; transform: scale(1); }
-
         .effect-slide { transform: translateY(100%); transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1); }
         .effect-slide.active { transform: translateY(0); }
 
-        /* =========================================================
-           CABEÇALHO
-           ========================================================= */
         .brand-header { background: #fff; padding: 20px 20px; position: relative; border-bottom: 1px solid #f2f2f2; display: flex; justify-content: space-between; align-items: center; }
         .brand-logo-container { display: flex; align-items: center; gap: 8px; flex-grow: 1; }
         .brand-swoosh { width: 35px; height: auto; transform: rotate(-10deg); }
         .brand-text { font-size: 1.6rem; font-weight: 700; color: #ea1d2c; letter-spacing: -1px; margin: 0; }
         
-        .header-cart-btn {
-            position: relative; width: 45px; height: 45px; border-radius: 50%; background: #fff; color: #ea1d2c;
-            display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid #f2f2f2; flex-shrink: 0;
-        }
+        .header-cart-btn { position: relative; width: 45px; height: 45px; border-radius: 50%; background: #fff; color: #ea1d2c; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid #f2f2f2; flex-shrink: 0; }
         .header-cart-btn:active { transform: scale(0.9); background: #fdfdfd; }
         .cart-badge { position: absolute; top: -5px; right: -5px; background: #ea1d2c; color: white; font-size: 0.75rem; padding: 2px 7px; border-radius: 50%; border: 2px solid #fff; font-weight: bold; display: none; }
 
-        /* =========================================================
-           CARROSSEL DE BANNERS ROTATIVOS
-           ========================================================= */
         .banner-carousel-wrapper { background: #f8f8f8; padding: 15px 15px 0; display: none; }
         .banner-track { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; border-radius: 12px; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
         .banner-track::-webkit-scrollbar { display: none; }
         .banner-slide { flex: 0 0 100%; height: 150px; border-radius: 12px; object-fit: cover; scroll-snap-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
 
-        /* =========================================================
-           CATEGORIAS
-           ========================================================= */
         .button-scroll-container { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 12px; padding: 15px; background: #f8f8f8; scrollbar-width: none; -webkit-overflow-scrolling: touch; width: 100%; }
         .button-scroll-container::-webkit-scrollbar { display: none; }
         .button-item { display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fff; padding: 12px 5px; border-radius: 16px; text-align: center; cursor: pointer; border: 2px solid transparent; transition: all 0.3s ease; flex: 0 0 auto; width: 85px; box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
@@ -102,9 +56,6 @@
         .button-item.active .filter-icon { color: #fff; } 
         .section-title { padding: 5px 15px 10px; font-size: 1.1rem; font-weight: 700; color: #333; }
 
-        /* =========================================================
-           LISTA DE LOJAS
-           ========================================================= */
         .store-list { padding: 0 15px; }
         .store-card { display: flex; align-items: center; padding: 15px; margin-bottom: 12px; border-radius: 12px; cursor: pointer; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.04); border: 1px solid #f2f2f2; transition: 0.2s; }
         .store-card:active { transform: scale(0.98); background-color: #f9f9f9; }
@@ -116,9 +67,6 @@
         .store-details { font-size: 0.8rem; color: #717171; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
         .store-details .dot { color: #ccc; font-size: 0.6rem; }
 
-        /* =========================================================
-           MODAIS E CARDÁPIO DA LOJA
-           ========================================================= */
         #menu-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f8f8f8; z-index: 10000; transform: translateY(100%); transition: transform 0.3s ease; overflow-y: auto; padding-bottom: 20px; display: block; }
         #menu-modal.active { transform: translateY(0); }
         .store-cover { height: 160px; background-color: #ea1d2c; background-size: cover; background-position: center; position: relative; }
@@ -209,11 +157,7 @@
         </div>
         
         <div class="header-cart-btn" onclick="window.location.href='carrinho.html'">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ea1d2c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="9" cy="21" r="1"></circle>
-                <circle cx="20" cy="21" r="1"></circle>
-                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-            </svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ea1d2c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
             <span class="cart-badge" id="cart-count">0</span>
         </div>
     </div>
@@ -226,51 +170,19 @@
         <button class="btn-install" id="btn-install-app">Instalar</button>
     </div>
 
-    <div class="banner-carousel-wrapper" id="banner-wrapper">
-        <div class="banner-track" id="banner-track"></div>
-    </div>
+    <div class="banner-carousel-wrapper" id="banner-wrapper"><div class="banner-track" id="banner-track"></div></div>
 
     <section class="button-scroll-container" id="category-filters">
-        <div class="button-item active" onclick="window.filterCategory('Todos', this)">
-            <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon"><path d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z"/></svg>
-            <span>Todos</span>
-        </div>
-        <div class="button-item" onclick="window.filterCategory('Restaurantes', this)">
-            <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg>
-            <span>Restaurantes</span>
-        </div>
-        <div class="button-item" onclick="window.filterCategory('Lanches', this)">
-            <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon"><path d="M21.99 10.93c-.15-2.92-2.31-5.38-5.18-5.83C15.22 4.41 13.68 4 12 4s-3.22.41-4.81 1.1c-2.87.45-5.03 2.91-5.18 5.83H2v2h2v4c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-4h2v-2h-.01zM18 17H6v-4h12v4z"/></svg>
-            <span>Lanches</span>
-        </div>
-        <div class="button-item" onclick="window.filterCategory('Bares', this)">
-            <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon"><path d="M21 5V3H3v2l8 9v5H6v2h12v-2h-5v-5l8-9zM7.43 7L5.66 5h12.69l-1.78 2H7.43z"/></svg>
-            <span>Bares</span>
-        </div>
-        <div class="button-item" onclick="window.filterCategory('Sorveterias', this)">
-            <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon"><path d="M12 2C8.69 2 6 4.69 6 8c0 3.08 2.31 5.64 5.25 5.95V22h1.5v-8.05C15.69 13.64 18 11.08 18 8c0-3.31-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/></svg>
-            <span>Sorveterias</span>
-        </div>
-        <div class="button-item" onclick="window.filterCategory('Mercados', this)">
-            <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
-            <span>Mercados</span>
-        </div>
-        <div class="button-item" onclick="window.filterCategory('Farmácias', this)">
-            <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
-            <span>Farmácias</span>
-        </div>
-        <div class="button-item" onclick="window.filterCategory('Loja de Roupas', this)">
-            <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon"><path d="M21.99 8c0-.72-.37-1.35-.94-1.7L12 1 2.95 6.3C2.38 6.65 2 7.28 2 8v2h2v11h16V10h2V8zM12 3.19l7 3.91V8h-2v11H7V8H5V7.1l7-3.91z"/></svg>
-            <span>Moda</span>
-        </div>
-        <div class="button-item" onclick="window.filterCategory('Açougue', this)">
-            <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon"><path d="M20.5 3.5l-6 6c-.39-.39-1.02-.39-1.41 0L3.5 19.09l1.41 1.41 9.59-9.59c.39.39 1.02.39 1.41 0l6-6V3.5h-1.41z"/></svg>
-            <span>Açougue</span>
-        </div>
-        <div class="button-item" onclick="window.filterCategory('Utilidades', this)">
-            <svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon"><path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/></svg>
-            <span>Utilidades</span>
-        </div>
+        <div class="button-item active" onclick="window.filterCategory('Todos', this)"><svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon"><path d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z"/></svg><span>Todos</span></div>
+        <div class="button-item" onclick="window.filterCategory('Restaurantes', this)"><svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg><span>Restaurantes</span></div>
+        <div class="button-item" onclick="window.filterCategory('Lanches', this)"><svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon"><path d="M21.99 10.93c-.15-2.92-2.31-5.38-5.18-5.83C15.22 4.41 13.68 4 12 4s-3.22.41-4.81 1.1c-2.87.45-5.03 2.91-5.18 5.83H2v2h2v4c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-4h2v-2h-.01zM18 17H6v-4h12v4z"/></svg><span>Lanches</span></div>
+        <div class="button-item" onclick="window.filterCategory('Bares', this)"><svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon"><path d="M21 5V3H3v2l8 9v5H6v2h12v-2h-5v-5l8-9zM7.43 7L5.66 5h12.69l-1.78 2H7.43z"/></svg><span>Bares</span></div>
+        <div class="button-item" onclick="window.filterCategory('Sorveterias', this)"><svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon"><path d="M12 2C8.69 2 6 4.69 6 8c0 3.08 2.31 5.64 5.25 5.95V22h1.5v-8.05C15.69 13.64 18 11.08 18 8c0-3.31-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/></svg><span>Sorveterias</span></div>
+        <div class="button-item" onclick="window.filterCategory('Mercados', this)"><svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg><span>Mercados</span></div>
+        <div class="button-item" onclick="window.filterCategory('Farmácias', this)"><svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg><span>Farmácias</span></div>
+        <div class="button-item" onclick="window.filterCategory('Loja de Roupas', this)"><svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon"><path d="M21.99 8c0-.72-.37-1.35-.94-1.7L12 1 2.95 6.3C2.38 6.65 2 7.28 2 8v2h2v11h16V10h2V8zM12 3.19l7 3.91V8h-2v11H7V8H5V7.1l7-3.91z"/></svg><span>Moda</span></div>
+        <div class="button-item" onclick="window.filterCategory('Açougue', this)"><svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon"><path d="M20.5 3.5l-6 6c-.39-.39-1.02-.39-1.41 0L3.5 19.09l1.41 1.41 9.59-9.59c.39.39 1.02.39 1.41 0l6-6V3.5h-1.41z"/></svg><span>Açougue</span></div>
+        <div class="button-item" onclick="window.filterCategory('Utilidades', this)"><svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon"><path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/></svg><span>Utilidades</span></div>
     </section>
 
     <h2 class="section-title" id="list-title">Lojas</h2>
@@ -280,9 +192,7 @@
     
     <div id="product-modal">
         <div class="prod-img-header">
-            <button class="btn-back-prod" onclick="window.closeProductModal()">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            </button>
+            <button class="btn-back-prod" onclick="window.closeProductModal()"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
             <img id="p-modal-img" src="" alt="Imagem do Produto">
         </div>
         <div class="prod-body">
@@ -291,22 +201,12 @@
             <span class="price-tag" id="p-modal-price">R$ 0,00</span>
             <div id="p-modal-variants"></div>
             <div id="p-modal-addons"></div>
-            <div class="obs-header">
-                <h4>Alguma observação?</h4>
-                <span id="obs-count">0/140</span>
-            </div>
+            <div class="obs-header"><h4>Alguma observação?</h4><span id="obs-count">0/140</span></div>
             <textarea class="obs-textarea" id="p-modal-obs" rows="3" maxlength="140" placeholder="Ex: tirar a cebola..." oninput="window.updateObsCount()"></textarea>
         </div>
         <div class="bottom-action-bar">
-            <div class="qty-controls">
-                <button class="qty-btn" onclick="window.changeQty(-1)">-</button>
-                <span class="qty-number" id="p-modal-qty">1</span>
-                <button class="qty-btn" onclick="window.changeQty(1)">+</button>
-            </div>
-            <button class="btn-add-cart" onclick="window.confirmAddToCart()">
-                <span>Adicionar</span>
-                <span id="p-modal-total-btn">R$ 0,00</span>
-            </button>
+            <div class="qty-controls"><button class="qty-btn" onclick="window.changeQty(-1)">-</button><span class="qty-number" id="p-modal-qty">1</span><button class="qty-btn" onclick="window.changeQty(1)">+</button></div>
+            <button class="btn-add-cart" onclick="window.confirmAddToCart()"><span>Adicionar</span><span id="p-modal-total-btn">R$ 0,00</span></button>
         </div>
     </div>
 
@@ -337,7 +237,7 @@
         let prodQty = 1; let basePriceCalc = 0; let currentCategoryFilter = null; 
         let cart = JSON.parse(localStorage.getItem('cart')) || [];
 
-        // PWA - INSTALAÇÃO
+        // PWA
         let deferredPrompt;
         const installBanner = document.getElementById('install-banner');
         const installBtn = document.getElementById('btn-install-app');
@@ -345,11 +245,7 @@
         installBtn.addEventListener('click', async () => { installBanner.style.display = 'none'; if (deferredPrompt) { deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt = null; } });
         if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Falhou:', err)); }); }
         
-        // ==========================================
-        // O CÉREBRO DOS PATROCINADORES EM SEQUÊNCIA
-        // ==========================================
         let allActiveSponsors = [];
-
         onSnapshot(collection(db, "sponsors"), (snapshot) => {
             allActiveSponsors = [];
             snapshot.forEach(doc => allActiveSponsors.push(doc.data()));
@@ -363,10 +259,7 @@
                 const sponsorContent = document.getElementById('sponsor-content');
                 
                 if (splash) {
-                    if(allActiveSponsors.length > 0 && sponsorWrapper) {
-                        sponsorWrapper.style.display = 'flex';
-                    }
-
+                    if(allActiveSponsors.length > 0 && sponsorWrapper) { sponsorWrapper.style.display = 'flex'; }
                     splash.classList.add('hidden'); 
                     
                     setTimeout(() => { 
@@ -374,7 +267,6 @@
                         
                         if(allActiveSponsors.length > 0 && sponsorWrapper) {
                             let indexAtual = 0;
-
                             function mostrarProximoPatrocinador() {
                                 if (indexAtual >= allActiveSponsors.length) {
                                     sponsorWrapper.style.transition = "opacity 0.5s ease";
@@ -382,7 +274,6 @@
                                     setTimeout(() => sponsorWrapper.style.display = 'none', 500);
                                     return;
                                 }
-
                                 const spAtual = allActiveSponsors[indexAtual];
                                 const classEfeito = `effect-${spAtual.transition || 'fade'}`;
                                 const tempoMs = (spAtual.duration || 2) * 1000;
@@ -395,13 +286,9 @@
                                 
                                 setTimeout(() => {
                                     sponsorContent.classList.remove('active'); 
-                                    setTimeout(() => {
-                                        indexAtual++;
-                                        mostrarProximoPatrocinador(); 
-                                    }, 600); 
+                                    setTimeout(() => { indexAtual++; mostrarProximoPatrocinador(); }, 600); 
                                 }, tempoMs); 
                             }
-                            
                             mostrarProximoPatrocinador(); 
                         }
                     }, 500); 
@@ -416,6 +303,7 @@
             const wrapper = document.getElementById('banner-wrapper');
             const banners = [];
             snapshot.forEach(doc => banners.push(doc.data()));
+
             if(banners.length > 0) {
                 wrapper.style.display = 'block';
                 track.innerHTML = banners.map(b => `<img src="${b.image}" class="banner-slide">`).join('');
@@ -428,10 +316,11 @@
                         track.scrollTo({ left: scrollAmount * currentIndex, behavior: 'smooth' });
                     }
                 }, 3500);
-            } else { wrapper.style.display = 'none'; }
+            } else {
+                wrapper.style.display = 'none';
+            }
         });
 
-        // LOJAS
         onSnapshot(collection(db, "stores"), (snapshot) => {
             allStores = [];
             snapshot.forEach(doc => allStores.push({ id: doc.id, ...doc.data() }));
@@ -441,18 +330,29 @@
         window.renderStores = () => {
             const container = document.getElementById('store-list-container');
             let filteredStores = allStores.filter(s => s.isActive !== false);
-            if (currentCategoryFilter && currentCategoryFilter !== 'Todos') { filteredStores = filteredStores.filter(s => s.cat && s.cat.toLowerCase().includes(currentCategoryFilter.toLowerCase())); }
+
+            if (currentCategoryFilter && currentCategoryFilter !== 'Todos') {
+                filteredStores = filteredStores.filter(s => s.cat && s.cat.toLowerCase().includes(currentCategoryFilter.toLowerCase()));
+            }
+
             filteredStores.sort((a, b) => {
                 const getWeight = (store) => { if (store.isActive === false) return 2; if (store.status === 'Fechado') return 1; return 0; };
                 return getWeight(a) - getWeight(b);
             });
+
             if (filteredStores.length === 0) { container.innerHTML = `<p style="padding: 30px 0; color: #999; text-align: center;">Nenhuma loja encontrada.</p>`; return; }
+
             container.innerHTML = filteredStores.map(s => {
-                const isSuspended = s.isActive === false; const isClosed = s.status === 'Fechado';
+                const isSuspended = s.isActive === false;
+                const isClosed = s.status === 'Fechado';
                 const cardClass = (isClosed || isSuspended) ? 'store-card closed' : 'store-card';
-                let statusText = s.status || 'Aberto'; let statusColor = '#00a14b'; 
+                
+                let statusText = s.status || 'Aberto';
+                let statusColor = '#00a14b'; 
+
                 if (isSuspended) { statusText = 'Indisponível'; statusColor = '#ea1d2c'; } else if (isClosed) { statusText = 'Fechado'; statusColor = '#717171'; }
                 const onClickAction = isSuspended ? `alert('Esta loja está indisponível.');` : `window.openMenu('${s.id}', '${s.name}', '${s.logo}', '${s.cat}', '${s.status}')`;
+                
                 return `
                 <div class="${cardClass}" onclick="${onClickAction}">
                     <img src="${s.logo}" class="store-logo" alt="Logo">
@@ -477,27 +377,28 @@
         window.openMenu = (storeId, storeName, storeLogo, storeCat, storeStatus) => {
             activeStore = { id: storeId, name: storeName, logo: storeLogo, status: storeStatus || 'Aberto' };
             const coverImage = storeLogo !== 'https://via.placeholder.com/60' ? storeLogo : 'https://via.placeholder.com/600x300';
+            
             document.getElementById('modal-content').innerHTML = `
                 <div class="store-cover" style="background-image: url('${coverImage}');"><div class="cover-btns"><button class="btn-circle" onclick="window.closeMenu()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></button></div></div>
                 <div style="padding: 40px; text-align: center; color: #777;">Carregando cardápio...</div>
             `;
             document.getElementById('menu-modal').classList.add('active');
-            onSnapshot(query(collection(db, "products"), where("storeId", "==", storeId)), (snapshot) => {
-                currentStoreProducts = []; snapshot.forEach(doc => currentStoreProducts.push({ id: doc.id, ...doc.data() }));
+
+            const q = query(collection(db, "products"), where("storeId", "==", storeId));
+            onSnapshot(q, (snapshot) => {
+                currentStoreProducts = [];
+                snapshot.forEach(doc => currentStoreProducts.push({ id: doc.id, ...doc.data() }));
                 window.renderMenuHtml(storeName, storeLogo, storeCat, storeStatus, coverImage);
             });
         };
 
         window.renderMenuHtml = (storeName, storeLogo, storeCat, storeStatus, coverImage) => {
             let productsHTML = '';
-
-            // 🟢 LÓGICA DE FILTRAGEM DE PRODUTOS INATIVOS AQUI 🟢
             const availableProducts = currentStoreProducts.filter(p => p.isActive !== false);
 
             if (availableProducts.length === 0) { 
                 productsHTML = `<div style="background: #fff; padding: 40px 20px; text-align: center; color: #717171; height: 100%;">O cardápio está vazio no momento. Volte em breve!</div>`; 
-            } 
-            else {
+            } else {
                 let categories = [...new Set(availableProducts.map(p => p.category || 'Geral'))];
                 categories.sort((a, b) => { if (a === 'Destaques') return -1; if (b === 'Destaques') return 1; return a.localeCompare(b); });
                 
@@ -510,8 +411,8 @@
                                     let displayPrice = p.price > 0 ? `R$ ${p.price.toFixed(2)}` : (p.variants && p.variants.length > 0 ? `A partir de R$ ${p.variants[0].price.toFixed(2)}` : 'R$ 0,00');
                                     let badgeTop = (cat === 'Destaques' && index === 0) ? '<div class="badge-top">Mais pedido</div>' : '';
                                     
-                                    // 🟢 LÓGICA DA ETIQUETA DE PROMOÇÃO 🟢
-                                    let promoBadge = p.isPromo === true ? '<span style="background:#f59e0b; color:#fff; font-size:0.65rem; padding:3px 6px; border-radius:4px; margin-left:6px; display:inline-block; vertical-align:middle;">⭐ Promoção</span>' : '';
+                                    // 🟢 NOVA ETIQUETA DE PROMOÇÃO (VERMELHA E MAIS BONITA) 🟢
+                                    let promoBadge = p.isPromo === true ? '<span style="background:#ea1d2c; color:#fff; font-size:0.65rem; font-weight:800; padding:4px 8px; border-radius:12px; margin-left:8px; display:inline-flex; align-items:center; letter-spacing:0.5px; text-transform:uppercase; box-shadow: 0 2px 4px rgba(234, 29, 44, 0.2);">Promoção</span>' : '';
                                     
                                     return `<div class="prod-card-list" onclick="window.openProductModal('${p.id}')"><div class="img-wrapper"><img src="${p.image || 'https://via.placeholder.com/150'}" alt="Foto Produto">${badgeTop}</div><div class="prod-info-list"><div class="name" style="display:flex; align-items:center; flex-wrap:wrap; gap:4px;">${p.name} ${promoBadge}</div><div class="desc">${p.desc || ''}</div><div class="price">${displayPrice}</div></div></div>`;
                                 }).join('')}
@@ -533,19 +434,53 @@
             window.updateCartBadge(); 
         };
 
-        window.filterStoreMenu = (categoryName, element) => { document.querySelectorAll('.store-cat-btn').forEach(btn => btn.classList.remove('active')); element.classList.add('active'); document.querySelectorAll('.store-category-group').forEach(group => { if (categoryName === 'Todas' || group.dataset.category === categoryName) { group.style.display = 'block'; } else { group.style.display = 'none'; } }); };
+        window.filterStoreMenu = (categoryName, element) => {
+            document.querySelectorAll('.store-cat-btn').forEach(btn => btn.classList.remove('active'));
+            element.classList.add('active');
+            document.querySelectorAll('.store-category-group').forEach(group => {
+                if (categoryName === 'Todas' || group.dataset.category === categoryName) {
+                    group.style.display = 'block';
+                } else {
+                    group.style.display = 'none';
+                }
+            });
+        };
+
         window.closeMenu = () => document.getElementById('menu-modal').classList.remove('active');
 
         window.openProductModal = (productId) => {
-            activeProduct = currentStoreProducts.find(p => p.id === productId); if(!activeProduct) return;
-            prodQty = 1; document.getElementById('p-modal-qty').innerText = prodQty; document.getElementById('p-modal-obs').value = ''; window.updateObsCount();
-            document.getElementById('p-modal-img').src = activeProduct.image || 'https://via.placeholder.com/600x400'; document.getElementById('p-modal-name').innerText = activeProduct.name; document.getElementById('p-modal-desc').innerText = activeProduct.desc || '';
-            basePriceCalc = activeProduct.price > 0 ? activeProduct.price : 0; document.getElementById('p-modal-price').innerText = `R$ ${basePriceCalc.toFixed(2)}`;
+            activeProduct = currentStoreProducts.find(p => p.id === productId);
+            if(!activeProduct) return;
+
+            prodQty = 1;
+            document.getElementById('p-modal-qty').innerText = prodQty;
+            document.getElementById('p-modal-obs').value = '';
+            window.updateObsCount();
+
+            document.getElementById('p-modal-img').src = activeProduct.image || 'https://via.placeholder.com/600x400';
+            document.getElementById('p-modal-name').innerText = activeProduct.name;
+            document.getElementById('p-modal-desc').innerText = activeProduct.desc || '';
+            
+            basePriceCalc = activeProduct.price > 0 ? activeProduct.price : 0;
+            document.getElementById('p-modal-price').innerText = `R$ ${basePriceCalc.toFixed(2)}`;
 
             const varContainer = document.getElementById('p-modal-variants');
             if (activeProduct.variants && activeProduct.variants.length > 0) {
                 if(basePriceCalc === 0) basePriceCalc = activeProduct.variants[0].price;
-                varContainer.innerHTML = `<div class="options-group"><h4>${activeProduct.variantTitle || 'Escolha a opção'}</h4>${activeProduct.variants.map((v, index) => `<div class="option-item" onclick="document.getElementById('var-${index}').click()"><label>${v.name}</label><div style="display:flex; align-items:center; gap:10px;"><span class="option-price">+ R$ ${v.price.toFixed(2)}</span><input type="radio" name="prodVariant" id="var-${index}" value="${v.price}" ${index === 0 ? 'checked' : ''} onchange="window.calculateModalPrice()"></div></div>`).join('')}</div>`;
+                varContainer.innerHTML = `
+                    <div class="options-group">
+                        <h4>${activeProduct.variantTitle || 'Escolha a opção'}</h4>
+                        ${activeProduct.variants.map((v, index) => `
+                            <div class="option-item" onclick="document.getElementById('var-${index}').click()">
+                                <label>${v.name}</label>
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <span class="option-price">+ R$ ${v.price.toFixed(2)}</span>
+                                    <input type="radio" name="prodVariant" id="var-${index}" value="${v.price}" ${index === 0 ? 'checked' : ''} onchange="window.calculateModalPrice()">
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
             } else { varContainer.innerHTML = ''; }
 
             const addContainer = document.getElementById('p-modal-addons');
@@ -553,45 +488,121 @@
                 addContainer.innerHTML = activeProduct.modifiers.map((modCat, catIdx) => {
                     const reqBadge = modCat.isRequired ? `<span style="background:#ea1d2c; color:#fff; font-size:0.6rem; padding:2px 6px; border-radius:4px; margin-left:10px;">Obrigatório</span>` : '';
                     const typeInput = modCat.isMultiple ? 'checkbox' : 'radio';
-                    return `<div class="options-group"><h4 style="margin-bottom: 5px;">${modCat.name} ${reqBadge}</h4><p style="font-size:0.75rem; color:#777; margin-bottom: 10px;">${modCat.isMultiple ? 'Escolha vários' : 'Escolha 1'}</p>${modCat.options.map((opt, optIdx) => `<div class="option-item" onclick="document.getElementById('mod-${catIdx}-${optIdx}').click()"><label>${opt.name}</label><div style="display:flex; align-items:center; gap:10px;"><span class="option-price">${opt.price > 0 ? '+ R$ ' + parseFloat(opt.price).toFixed(2) : ''}</span><input type="${typeInput}" class="addon-check" name="modcat_${catIdx}" id="mod-${catIdx}-${optIdx}" value="${opt.price || 0}" data-name="${opt.name}" onchange="window.calculateModalPrice()"></div></div>`).join('')}</div>`;
+                    return `
+                    <div class="options-group">
+                        <h4 style="margin-bottom: 5px;">${modCat.name} ${reqBadge}</h4>
+                        <p style="font-size:0.75rem; color:#777; margin-bottom: 10px;">${modCat.isMultiple ? 'Escolha vários' : 'Escolha 1'}</p>
+                        ${modCat.options.map((opt, optIdx) => `
+                            <div class="option-item" onclick="document.getElementById('mod-${catIdx}-${optIdx}').click()">
+                                <label>${opt.name}</label>
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <span class="option-price">${opt.price > 0 ? '+ R$ ' + parseFloat(opt.price).toFixed(2) : ''}</span>
+                                    <input type="${typeInput}" class="addon-check" name="modcat_${catIdx}" id="mod-${catIdx}-${optIdx}" value="${opt.price || 0}" data-name="${opt.name}" onchange="window.calculateModalPrice()">
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    `;
                 }).join('');
             } else { addContainer.innerHTML = ''; }
-            window.calculateModalPrice(); document.getElementById('product-modal').classList.add('active');
+
+            window.calculateModalPrice();
+            document.getElementById('product-modal').classList.add('active');
         };
 
         window.closeProductModal = () => document.getElementById('product-modal').classList.remove('active');
-        window.changeQty = (amount) => { prodQty += amount; if (prodQty < 1) prodQty = 1; document.getElementById('p-modal-qty').innerText = prodQty; window.calculateModalPrice(); };
-        window.updateObsCount = () => { const obs = document.getElementById('p-modal-obs').value; document.getElementById('obs-count').innerText = `${obs.length}/140`; };
+
+        window.changeQty = (amount) => {
+            prodQty += amount;
+            if (prodQty < 1) prodQty = 1;
+            document.getElementById('p-modal-qty').innerText = prodQty;
+            window.calculateModalPrice();
+        };
+
+        window.updateObsCount = () => {
+            const obs = document.getElementById('p-modal-obs').value;
+            document.getElementById('obs-count').innerText = `${obs.length}/140`;
+        };
 
         window.calculateModalPrice = () => {
             let finalPrice = basePriceCalc;
-            const selectedVariant = document.querySelector('input[name="prodVariant"]:checked'); if (selectedVariant) finalPrice = parseFloat(selectedVariant.value);
-            const addons = document.querySelectorAll('.addon-check:checked'); addons.forEach(addon => { finalPrice += parseFloat(addon.value); });
-            document.getElementById('p-modal-total-btn').innerText = `R$ ${(finalPrice * prodQty).toFixed(2)}`;
+            const selectedVariant = document.querySelector('input[name="prodVariant"]:checked');
+            if (selectedVariant) finalPrice = parseFloat(selectedVariant.value);
+            const addons = document.querySelectorAll('.addon-check:checked');
+            addons.forEach(addon => { finalPrice += parseFloat(addon.value); });
+
+            const total = finalPrice * prodQty;
+            document.getElementById('p-modal-total-btn').innerText = `R$ ${total.toFixed(2)}`;
         };
 
         window.confirmAddToCart = () => {
-            if(activeStore.status === 'Fechado') return alert("Esta loja está fechada.");
+            if(activeStore.status === 'Fechado') {
+                alert("Esta loja está fechada no momento. Não é possível adicionar itens ao carrinho.");
+                return;
+            }
+
             if (activeProduct.modifiers && activeProduct.modifiers.length > 0) {
                 for (let i = 0; i < activeProduct.modifiers.length; i++) {
                     const modCat = activeProduct.modifiers[i];
-                    if (modCat.isRequired && document.querySelectorAll(`input[name="modcat_${i}"]:checked`).length === 0) return alert(`Selecione uma opção em: ${modCat.name}`);
+                    if (modCat.isRequired) {
+                        const checked = document.querySelectorAll(`input[name="modcat_${i}"]:checked`);
+                        if (checked.length === 0) {
+                            alert(`Por favor, selecione uma opção em: ${modCat.name}`);
+                            return;
+                        }
+                    }
                 }
             }
-            let finalPrice = basePriceCalc; let selectedVariantText = '';
-            const selectedVariant = document.querySelector('input[name="prodVariant"]:checked');
-            if (selectedVariant) { finalPrice = parseFloat(selectedVariant.value); selectedVariantText = selectedVariant.closest('.option-item').querySelector('label').innerText.trim(); }
-            let selectedAddonsText = [];
-            document.querySelectorAll('.addon-check:checked').forEach(addon => { finalPrice += parseFloat(addon.value); selectedAddonsText.push(addon.dataset.name); });
+
+            let finalPrice = basePriceCalc;
+            let selectedVariantText = '';
             
-            cart.push({ id: activeProduct.id + '-' + Date.now(), name: activeProduct.name, variant: selectedVariantText, addons: selectedAddonsText, observation: document.getElementById('p-modal-obs').value, price: finalPrice * prodQty, qty: prodQty, store: activeStore.name, storeId: activeStore.id });
-            localStorage.setItem('cart', JSON.stringify(cart)); window.updateCartBadge(); window.closeProductModal();
+            const selectedVariant = document.querySelector('input[name="prodVariant"]:checked');
+            if (selectedVariant) {
+                finalPrice = parseFloat(selectedVariant.value);
+                const label = selectedVariant.closest('.option-item').querySelector('label');
+                selectedVariantText = label.innerText.trim();
+            }
+
+            let selectedAddonsText = [];
+            const addons = document.querySelectorAll('.addon-check:checked');
+            addons.forEach(addon => {
+                finalPrice += parseFloat(addon.value);
+                selectedAddonsText.push(addon.dataset.name);
+            });
+
+            const observation = document.getElementById('p-modal-obs').value;
+
+            const cartItem = {
+                id: activeProduct.id + '-' + Date.now(),
+                name: activeProduct.name,
+                variant: selectedVariantText,
+                addons: selectedAddonsText,
+                observation: observation,
+                price: finalPrice * prodQty,
+                qty: prodQty,
+                store: activeStore.name,
+                storeId: activeStore.id
+            };
+
+            cart.push(cartItem);
+            localStorage.setItem('cart', JSON.stringify(cart));
+            window.updateCartBadge();
+            window.closeProductModal();
         };
 
         window.updateCartBadge = () => {
-            const mainBadge = document.getElementById('cart-count'); const modalBadge = document.getElementById('modal-cart-count');
-            if (mainBadge) { mainBadge.style.display = cart.length > 0 ? 'block' : 'none'; mainBadge.innerText = cart.length; }
-            if (modalBadge) { modalBadge.style.display = cart.length > 0 ? 'block' : 'none'; modalBadge.innerText = cart.length; }
+            const mainBadge = document.getElementById('cart-count');
+            const modalBadge = document.getElementById('modal-cart-count');
+            
+            if (mainBadge) {
+                mainBadge.style.display = cart.length > 0 ? 'block' : 'none';
+                mainBadge.innerText = cart.length;
+            }
+            if (modalBadge) {
+                modalBadge.style.display = cart.length > 0 ? 'block' : 'none';
+                modalBadge.innerText = cart.length;
+            }
         };
     </script>
 </body>
