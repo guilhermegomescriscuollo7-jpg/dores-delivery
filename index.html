@@ -14,7 +14,7 @@
            BOTÃO DE INSTALAR APP (PWA)
            ========================================================= */
         #install-banner {
-            display: none; /* Fica escondido até o navegador autorizar */
+            display: none;
             background: #111;
             color: #fff;
             padding: 12px 20px;
@@ -50,24 +50,23 @@
         .splash-swoosh { width: 60px; height: auto; transform: rotate(-10deg); }
         .splash-text { font-size: 2.5rem; font-weight: 700; color: #ea1d2c; letter-spacing: -1.5px; margin: 0; }
 
-        /* Estrutura base da tela de patrocinador */
+        /* Tela do Patrocinador (Inicia escondida para não bugar a tela) */
         #sponsor-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #fff; z-index: 99998;
-            display: flex; align-items: center; justify-content: center;
-            pointer-events: none; /* Não clica até ativar */
+            align-items: center; justify-content: center;
         }
         #sponsor-screen img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* CLASSES DINÂMICAS DE EFEITOS GERADAS PELO ADMIN */
+        /* Efeitos Dinâmicos do Patrocinador */
         .effect-fade { opacity: 0; transition: opacity 0.6s ease; }
-        .effect-fade.active { opacity: 1; pointer-events: auto; }
+        .effect-fade.active { opacity: 1; }
 
         .effect-zoom { opacity: 0; transform: scale(0.8); transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1); }
-        .effect-zoom.active { opacity: 1; transform: scale(1); pointer-events: auto; }
+        .effect-zoom.active { opacity: 1; transform: scale(1); }
 
         .effect-slide { transform: translateY(100%); transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1); }
-        .effect-slide.active { transform: translateY(0); pointer-events: auto; }
+        .effect-slide.active { transform: translateY(0); }
 
         /* =========================================================
            CABEÇALHO
@@ -208,7 +207,7 @@
         </div>
     </div>
 
-    <div id="sponsor-screen">
+    <div id="sponsor-screen" style="display: none;">
         </div>
 
     <div class="brand-header">
@@ -400,31 +399,23 @@
             if (deferredPrompt) {
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') {
-                    console.log('Usuário aceitou a instalação');
-                } else {
-                    console.log('Usuário recusou a instalação');
-                }
+                if (outcome === 'accepted') { console.log('Instalado'); }
                 deferredPrompt = null;
             }
         });
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').then(registration => {
-                    console.log('Service Worker registrado!');
-                }).catch(err => {
-                    console.log('Service Worker falhou: ', err);
-                });
+                navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Falhou:', err));
             });
         }
         
         // ==========================================
-        // INICIALIZAÇÃO, SPLASH SCREEN E PATROCINADOR DINÂMICO
+        // LÓGICA DO PATROCINADOR E SPLASH SCREEN
         // ==========================================
         let currentSponsor = null;
 
-        // 1. Ouve a nuvem para pegar a configuração do patrocinador atual ANTES da tela abrir
+        // Ouve a nuvem para pegar a configuração do patrocinador
         onSnapshot(collection(db, "sponsors"), (snapshot) => {
             const sponsors = [];
             snapshot.forEach(doc => sponsors.push(doc.data()));
@@ -438,42 +429,39 @@
             }
         });
 
-        // 2. Controla o tempo da abertura
+        // Controla o tempo de abertura
         window.addEventListener('load', () => {
-            // A logo Dores Delivery fica 1.5s na tela
+            // A logo principal fica 1.5s na tela
             setTimeout(() => {
                 const splash = document.getElementById('splash-screen');
                 const sponsorDiv = document.getElementById('sponsor-screen');
                 
                 if (splash) {
-                    splash.classList.add('hidden'); // Faz o fade out da logo inicial
+                    splash.classList.add('hidden'); // Faz a logo sumir
                     
-                    // Espera 0.5s para a logo sumir totalmente
+                    // Espera 0.5s para sumir de vez da tela
                     setTimeout(() => { 
                         splash.style.display = 'none'; 
                         
-                        // Executa a inteligência do Patrocinador se ele existir na base de dados
+                        // Se existir um Patrocinador, mostra ele agora!
                         if(currentSponsor && sponsorDiv) {
+                            sponsorDiv.style.display = 'flex'; // Destrava a tela dele
                             const effectClass = `effect-${currentSponsor.transition || 'fade'}`;
                             const durationMs = (currentSponsor.duration || 2) * 1000;
                             
-                            // Injeta a imagem e a classe do efeito
                             sponsorDiv.innerHTML = `<img src="${currentSponsor.image}" alt="Patrocinador">`;
-                            sponsorDiv.className = effectClass;
+                            sponsorDiv.className = effectClass; 
                             
-                            // Força o navegador a reconhecer a classe antes de ativar
-                            void sponsorDiv.offsetWidth; 
-                            
-                            // Ativa o efeito para ele aparecer
-                            sponsorDiv.classList.add('active');
-                            
-                            // Aguarda o tempo configurado pelo Admin
+                            // Truque de 50 milisegundos pro CSS aplicar os estilos antes de animar
                             setTimeout(() => {
-                                sponsorDiv.classList.remove('active'); // Inicia a saída
+                                sponsorDiv.classList.add('active'); // O efeito acontece aqui
                                 
-                                // Remove do ecrã após a animação (0.6s)
-                                setTimeout(() => sponsorDiv.style.display = 'none', 600); 
-                            }, durationMs); 
+                                // Oculta o Patrocinador depois dos X segundos escolhidos
+                                setTimeout(() => {
+                                    sponsorDiv.classList.remove('active'); 
+                                    setTimeout(() => sponsorDiv.style.display = 'none', 600); // Tira da frente
+                                }, durationMs); 
+                            }, 50);
                         }
                     }, 500); 
                 }
@@ -483,7 +471,7 @@
         });
 
         // ==========================================
-        // 1. CARREGAR BANNERS (TEMPO REAL)
+        // LÓGICA DAS LOJAS, BANNERS E CARDÁPIO (MANTIDA)
         // ==========================================
         onSnapshot(collection(db, "banners"), (snapshot) => {
             const track = document.getElementById('banner-track');
@@ -494,7 +482,6 @@
             if(banners.length > 0) {
                 wrapper.style.display = 'block';
                 track.innerHTML = banners.map(b => `<img src="${b.image}" class="banner-slide">`).join('');
-                
                 let currentIndex = 0;
                 setInterval(() => {
                     if (track.children.length > 1) {
@@ -509,7 +496,6 @@
             }
         });
 
-        // 2. CARREGAR LOJAS (TEMPO REAL)
         onSnapshot(collection(db, "stores"), (snapshot) => {
             allStores = [];
             snapshot.forEach(doc => allStores.push({ id: doc.id, ...doc.data() }));
@@ -589,7 +575,6 @@
             window.renderStores();
         };
 
-        // 4. ABRIR CARDÁPIO DA LOJA
         window.openMenu = (storeId, storeName, storeLogo, storeCat, storeStatus) => {
             activeStore = { id: storeId, name: storeName, logo: storeLogo, status: storeStatus || 'Aberto' };
             const coverImage = storeLogo !== 'https://via.placeholder.com/60' ? storeLogo : 'https://via.placeholder.com/600x300';
@@ -710,7 +695,6 @@
 
         window.closeMenu = () => document.getElementById('menu-modal').classList.remove('active');
 
-        // 5. PRODUTO INDIVIDUAL
         window.openProductModal = (productId) => {
             activeProduct = currentStoreProducts.find(p => p.id === productId);
             if(!activeProduct) return;
