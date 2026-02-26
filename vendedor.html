@@ -68,9 +68,11 @@
         .pay-card { background: #eef4ff; color: #084298; border: 1px solid #b6d4fe; }
         .pay-pix { background: #fdf5e6; color: #997404; border: 1px solid #f9e1b5; }
         .order-total { font-size: 1.2rem; font-weight: 900; text-align: right; margin-bottom: 10px; }
-        .btn-action { width: 100%; padding: 10px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: #fff; transition: 0.2s;}
+        .btn-action { width: 100%; padding: 10px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: #fff; margin-bottom: 5px; transition: 0.2s;}
         .btn-action:active { transform: scale(0.98); }
-        .btn-accept { background: #00a14b; } .btn-dispatch { background: #0d6efd; }
+        .btn-accept { background: #00a14b; } 
+        .btn-dispatch { background: #0d6efd; }
+        .btn-call-driver { background: #8e44ad; }
 
         /* LAYOUT MEU CARDÁPIO */
         .menu-layout { display: flex; gap: 20px; height: calc(100% - 60px); }
@@ -275,11 +277,11 @@
                     <div id="list-pendente"></div>
                 </div>
                 <div class="kanban-col">
-                    <div class="col-header">Em Preparo / Aguardando Entregador <span class="col-count" id="count-preparo">0</span></div>
+                    <div class="col-header">Em Preparo / Rota <span class="col-count" id="count-preparo">0</span></div>
                     <div id="list-preparo"></div>
                 </div>
                 <div class="kanban-col">
-                    <div class="col-header">Saiu / Concluído <span class="col-count" id="count-concluido">0</span></div>
+                    <div class="col-header">Prontos / Entregues <span class="col-count" id="count-concluido">0</span></div>
                     <div id="list-concluido"></div>
                 </div>
             </div>
@@ -630,7 +632,7 @@
             else if (order.status === 'Em Preparo') { 
                 actionBtn = `
                 <div style="display:flex; flex-direction:column; gap:8px;">
-                    <button class="btn-action" style="background:#8e44ad; font-size:0.95rem; padding:12px;" onclick="window.updateOrderStatus('${order.id}', 'Aguardando Entregador')">🛎️ Chamar Entregador</button>
+                    <button class="btn-action btn-call-driver" onclick="window.updateOrderStatus('${order.id}', 'Aguardando Entregador')">🛎️ Chamar Entregador</button>
                     <div style="display:flex; gap:5px;">
                         <button class="btn-action" style="flex:1; background:#f59e0b; font-size:0.8rem; padding:10px 5px;" onclick="window.updateOrderStatus('${order.id}', 'Saiu para Entrega')">🛵 Próprio (Saiu)</button>
                         <button class="btn-action btn-dispatch" style="flex:1; font-size:0.8rem; padding:10px 5px;" onclick="window.updateOrderStatus('${order.id}', 'Concluído')">✅ Entregue</button>
@@ -752,6 +754,7 @@
         let globalProducts = [];
         let myCategories = ['Geral', 'Destaques'];
 
+        // Escuta os dados gerais da Loja para puxar as categorias
         onSnapshot(doc(db, "stores", loggedStore.id), (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
@@ -836,21 +839,37 @@
         };
 
         window.loadCategoriesAndProducts = () => {
-            const container = document.getElementById('product-list-container'); const catSelect = document.getElementById('ed-category');
-            container.innerHTML = ''; catSelect.innerHTML = '';
+            const container = document.getElementById('product-list-container'); 
+            const catSelect = document.getElementById('ed-category');
+            container.innerHTML = ''; 
+            catSelect.innerHTML = '';
 
-            myCategories.forEach(catName => {
+            let productCategories = globalProducts.map(p => p.category || 'Geral');
+            let allUniqueCategories = [...new Set([...myCategories, ...productCategories])];
+
+            allUniqueCategories.sort((a, b) => {
+                if (a === 'Destaques') return -1;
+                if (b === 'Destaques') return 1;
+                if (a === 'Geral' && b !== 'Destaques') return -1;
+                if (b === 'Geral' && a !== 'Destaques') return 1;
+                return a.localeCompare(b);
+            });
+
+            allUniqueCategories.forEach(catName => {
                 catSelect.innerHTML += `<option value="${catName}">${catName}</option>`;
                 const prodsInCat = globalProducts.filter(p => (p.category || 'Geral') === catName);
-                const deleteBtnHTML = catName !== 'Geral' ? `<button class="btn-del-cat" title="Excluir" onclick="window.deleteCategory('${catName}')">🗑️</button>` : '';
+                const deleteBtnHTML = (catName !== 'Geral' && catName !== 'Destaques') ? `<button class="btn-del-cat" title="Excluir" onclick="window.deleteCategory('${catName}')">🗑️</button>` : '';
+                
                 let blockHTML = `
                     <div class="category-block">
                         <div class="category-header">
                             <div><span style="font-weight: normal; font-size:0.75rem;">Nome da categoria</span><br><span style="color:#111; font-size:1rem;">${catName}</span></div>
                             <div class="cat-actions"><button class="btn-add-prod-cat" onclick="window.openEditorNew('${catName}')">+ Produto</button>${deleteBtnHTML}</div>
                         </div>`;
-                if (prodsInCat.length === 0) { blockHTML += `<div style="padding: 15px; font-size:0.85rem; color:#999; text-align:center;">Nenhum produto nesta categoria.</div>`; } 
-                else {
+                
+                if (prodsInCat.length === 0) { 
+                    blockHTML += `<div style="padding: 15px; font-size:0.85rem; color:#999; text-align:center;">Nenhum produto nesta categoria.</div>`; 
+                } else {
                     prodsInCat.forEach(p => {
                         let subText = (p.variants && p.variants.length > 0) ? `${p.variants.length} Variantes` : `R$ ${(p.price || 0).toFixed(2)}`;
                         blockHTML += `
@@ -860,7 +879,8 @@
                             </div>`;
                     });
                 }
-                blockHTML += `</div>`; container.innerHTML += blockHTML;
+                blockHTML += `</div>`; 
+                container.innerHTML += blockHTML;
             });
         };
 
@@ -901,14 +921,20 @@
                 finalPrice = parseFloat(finalVariants[0].price); varTitle = document.getElementById('ed-var-title').value.trim() || 'Escolha uma opção';
             }
             
-            const prodData = { storeId: loggedStore.id, name, desc, price: finalPrice, category, variants: finalVariants, variantTitle: varTitle, modifiers: editingModifiers };
+            const prodData = {
+                storeId: loggedStore.id, name, desc, price: finalPrice, category,
+                variants: finalVariants, variantTitle: varTitle, modifiers: editingModifiers
+            };
             if(editorImageBase64) prodData.image = editorImageBase64;
 
             try {
-                if (currentEditingId) { await updateDoc(doc(db, "products", currentEditingId), prodData); alert("Produto atualizado!"); } 
-                else {
+                if (currentEditingId) {
+                    await updateDoc(doc(db, "products", currentEditingId), prodData);
+                    alert("Produto atualizado!");
+                } else {
                     if(!editorImageBase64) prodData.image = 'https://via.placeholder.com/150';
-                    await addDoc(collection(db, "products"), prodData); alert("Produto salvo!");
+                    await addDoc(collection(db, "products"), prodData);
+                    alert("Produto salvo!");
                 }
                 window.clearEditor();
             } catch(e) { console.error(e); alert("Erro ao salvar produto."); }
@@ -917,10 +943,14 @@
         window.deleteEditingProduct = async () => {
             if(!currentEditingId) return;
             if(confirm("Apagar este produto permanentemente?")) {
-                try { await deleteDoc(doc(db, "products", currentEditingId)); window.clearEditor(); } catch(e) {}
+                try {
+                    await deleteDoc(doc(db, "products", currentEditingId));
+                    window.clearEditor();
+                } catch(e) { console.error("Erro ao deletar", e); }
             }
         };
 
+        // Modificadores Modal
         window.updateModBadge = () => { document.getElementById('mod-count-badge').innerText = editingModifiers.length; document.getElementById('mod-header-count').innerText = editingModifiers.length; };
         window.openModifiersModal = () => { document.getElementById('modifiers-modal').classList.add('active'); window.renderModifiersScreen(); };
         window.closeModifiersModal = () => { document.getElementById('modifiers-modal').classList.remove('active'); window.updateModBadge(); };
