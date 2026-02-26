@@ -320,16 +320,23 @@
                             </div>
                         </div>
 
-                        <div style="display: flex; gap: 15px;">
-                            <div class="form-group" style="flex: 1;">
-                                <label>Categoria do Produto</label>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <div class="form-group" style="flex: 1; min-width: 120px;">
+                                <label>Categoria</label>
                                 <select id="ed-category" class="form-input"></select>
                             </div>
-                            <div class="form-group" style="flex: 1;">
+                            <div class="form-group" style="flex: 1; min-width: 100px;">
                                 <label>Status</label>
                                 <select id="ed-status" class="form-input">
                                     <option value="true">🟢 Ativo</option>
                                     <option value="false">🔴 Inativo</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="flex: 1; min-width: 100px;">
+                                <label>Promoção</label>
+                                <select id="ed-promo" class="form-input">
+                                    <option value="false">❌ Não</option>
+                                    <option value="true">⭐ Sim</option>
                                 </select>
                             </div>
                         </div>
@@ -757,7 +764,7 @@
         };
 
         // ==========================================
-        // 5. GESTÃO DO CARDÁPIO E CATEGORIAS
+        // 5. GESTÃO DO CARDÁPIO E CATEGORIAS (FIREBASE)
         // ==========================================
         let currentEditingId = null; let editorImageBase64 = ''; let currentPriceType = 'simples'; let editingVariants = []; let editingModifiers = []; 
         let globalProducts = [];
@@ -882,10 +889,12 @@
                         let subText = (p.variants && p.variants.length > 0) ? `${p.variants.length} Variantes` : `R$ ${(p.price || 0).toFixed(2)}`;
                         let inactiveStyle = p.isActive === false ? 'opacity: 0.5; background: #fafafa;' : '';
                         let inactiveBadge = p.isActive === false ? '<span style="background:#ea1d2c; color:#fff; font-size:0.6rem; padding:2px 6px; border-radius:4px; margin-left:5px;">Inativo</span>' : '';
+                        let promoBadge = p.isPromo === true ? '<span style="background:#f59e0b; color:#fff; font-size:0.6rem; padding:2px 6px; border-radius:4px; margin-left:5px;">⭐ Promoção</span>' : '';
+                        
                         blockHTML += `
                             <div class="product-row" id="row-prod-${p.id}" onclick="window.openEditorEdit('${p.id}')" style="${inactiveStyle}">
                                 <div class="drag-handle">⋮⋮</div><img src="${p.image}" class="row-img">
-                                <div class="row-info"><div class="row-name">${p.name} ${inactiveBadge}</div><div class="row-sub">${subText}</div></div>
+                                <div class="row-info"><div class="row-name">${p.name} ${inactiveBadge} ${promoBadge}</div><div class="row-sub">${subText}</div></div>
                             </div>`;
                     });
                 }
@@ -900,6 +909,7 @@
             document.getElementById('ed-img-preview').style.display = 'none'; document.getElementById('btn-delete').style.display = 'none';
             editorImageBase64 = ''; document.getElementById('ed-price').value = ''; document.getElementById('ed-var-title').value = '';
             document.getElementById('ed-status').value = 'true';
+            document.getElementById('ed-promo').value = 'false';
             editingVariants = []; editingModifiers = []; window.updateModBadge(); window.setPriceType('simples'); 
             document.querySelectorAll('.product-row').forEach(row => row.classList.remove('selected'));
         };
@@ -917,6 +927,7 @@
                 if (prod.variants && prod.variants.length > 0) { window.setPriceType('variantes'); editingVariants = [...prod.variants]; document.getElementById('ed-var-title').value = prod.variantTitle || ''; window.renderVariantList(); } 
                 else { window.setPriceType('simples'); document.getElementById('ed-price').value = prod.price; }
                 document.getElementById('ed-status').value = prod.isActive !== false ? 'true' : 'false';
+                document.getElementById('ed-promo').value = prod.isPromo === true ? 'true' : 'false';
                 editingModifiers = prod.modifiers ? JSON.parse(JSON.stringify(prod.modifiers)) : []; window.updateModBadge();
             }
         };
@@ -924,7 +935,9 @@
         window.saveEditingProduct = async () => {
             const name = document.getElementById('ed-name').value.trim(); const desc = document.getElementById('ed-desc').value.trim(); const category = document.getElementById('ed-category').value;
             const isActive = document.getElementById('ed-status').value === 'true';
+            const isPromo = document.getElementById('ed-promo').value === 'true';
             let finalPrice = 0; let finalVariants = []; let varTitle = '';
+            
             if (!name) return alert("O Nome do produto é obrigatório!");
             if (currentPriceType === 'simples') {
                 finalPrice = parseFloat(document.getElementById('ed-price').value); if (isNaN(finalPrice)) return alert("Preço é obrigatório!");
@@ -936,7 +949,7 @@
             
             const prodData = {
                 storeId: loggedStore.id, name, desc, price: finalPrice, category,
-                isActive,
+                isActive, isPromo,
                 variants: finalVariants, variantTitle: varTitle, modifiers: editingModifiers
             };
             if(editorImageBase64) prodData.image = editorImageBase64;
