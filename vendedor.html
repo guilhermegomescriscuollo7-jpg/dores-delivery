@@ -463,11 +463,11 @@
         const db = getFirestore(app);
 
         // ==========================================
-        // 1. INICIALIZAÇÃO E AVISOS SONOROS
+        // 1. INICIALIZAÇÃO DA SESSÃO
         // ==========================================
         const loggedStore = JSON.parse(localStorage.getItem('loggedStore'));
         
-        // Verifica se a loja está corretamente logada com ID, se não, força novo login
+        // Verifica se a loja está logada
         if (!loggedStore || !loggedStore.id) { 
             localStorage.removeItem('loggedStore');
             window.location.href = 'login-vendedor.html'; 
@@ -496,6 +496,9 @@
             } catch(e) { console.error("Erro ao atualizar status", e) }
         };
 
+        // ==========================================
+        // 2. SISTEMA DE ALERTAS (SOM E TOAST)
+        // ==========================================
         let previousOrderCount = -1;
 
         window.requestNotificationPermission = () => {
@@ -573,7 +576,7 @@
         };
 
         // ==========================================
-        // 2. KANBAN DE PEDIDOS (TEMPO REAL FIREBASE)
+        // 3. KANBAN DE PEDIDOS (TEMPO REAL FIREBASE)
         // ==========================================
         const qOrders = query(collection(db, "orders"), where("storeId", "==", loggedStore.id));
 
@@ -641,7 +644,7 @@
         };
 
         // ==========================================
-        // 3. ALGORITMO DE RELATÓRIOS
+        // 4. ALGORITMO DE RELATÓRIOS
         // ==========================================
         window.loadReports = (myOrders) => {
             if(!myOrders) return; 
@@ -728,12 +731,24 @@
         };
 
         // ==========================================
-        // 4. GESTÃO DO CARDÁPIO E CATEGORIAS
+        // 5. GESTÃO DO CARDÁPIO E CATEGORIAS (FIREBASE)
         // ==========================================
         let currentEditingId = null; let editorImageBase64 = ''; let currentPriceType = 'simples'; let editingVariants = []; let editingModifiers = []; 
         let globalProducts = [];
+        let myCategories = ['Geral', 'Destaques'];
 
-        // Recupera produtos em tempo real da nuvem
+        // Escuta os dados gerais da Loja (Para puxar as Categorias)
+        onSnapshot(doc(db, "stores", loggedStore.id), (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                if (data.categories && Array.isArray(data.categories)) {
+                    myCategories = data.categories;
+                }
+                window.loadCategoriesAndProducts();
+            }
+        });
+
+        // Escuta os Produtos da Loja
         const qProducts = query(collection(db, "products"), where("storeId", "==", loggedStore.id));
         onSnapshot(qProducts, (snapshot) => {
             globalProducts = [];
@@ -787,19 +802,25 @@
         window.addVariantRow = () => { editingVariants.push({ name: '', price: '' }); window.renderVariantList(); };
         window.removeVariantRow = (index) => { editingVariants.splice(index, 1); window.renderVariantList(); };
 
-        window.promptNewCategory = () => {
+        window.promptNewCategory = async () => {
             const catName = prompt("Digite o nome da nova categoria:");
             if(catName && catName.trim() !== "") {
-                let storeCatsKey = `store_cats_${loggedStore.id}`; let myCategories = JSON.parse(localStorage.getItem(storeCatsKey)) || ['Geral', 'Destaques'];
-                if(!myCategories.includes(catName.trim())) { myCategories.push(catName.trim()); localStorage.setItem(storeCatsKey, JSON.stringify(myCategories)); window.loadCategoriesAndProducts(); } 
+                if(!myCategories.includes(catName.trim())) { 
+                    myCategories.push(catName.trim()); 
+                    try {
+                        await updateDoc(doc(db, "stores", loggedStore.id), { categories: myCategories });
+                    } catch(e) { console.error("Erro ao salvar categoria", e); }
+                } 
                 else { alert("Esta categoria já existe!"); }
             }
         };
 
         window.deleteCategory = async (catName) => {
             if(confirm(`Tem certeza que deseja excluir a categoria "${catName}"?\nOs produtos serão movidos para "Geral".`)) {
-                let storeCatsKey = `store_cats_${loggedStore.id}`; let myCategories = JSON.parse(localStorage.getItem(storeCatsKey)) || ['Geral', 'Destaques'];
-                myCategories = myCategories.filter(c => c !== catName); localStorage.setItem(storeCatsKey, JSON.stringify(myCategories));
+                myCategories = myCategories.filter(c => c !== catName); 
+                try {
+                    await updateDoc(doc(db, "stores", loggedStore.id), { categories: myCategories });
+                } catch(e) {}
                 
                 globalProducts.forEach(async (p) => {
                     if (p.category === catName) {
@@ -811,7 +832,6 @@
         };
 
         window.loadCategoriesAndProducts = () => {
-            let storeCatsKey = `store_cats_${loggedStore.id}`; let myCategories = JSON.parse(localStorage.getItem(storeCatsKey)) || ['Geral', 'Destaques'];
             const container = document.getElementById('product-list-container'); const catSelect = document.getElementById('ed-category');
             container.innerHTML = ''; catSelect.innerHTML = '';
 
