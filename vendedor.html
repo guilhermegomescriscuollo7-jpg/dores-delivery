@@ -68,11 +68,9 @@
         .pay-card { background: #eef4ff; color: #084298; border: 1px solid #b6d4fe; }
         .pay-pix { background: #fdf5e6; color: #997404; border: 1px solid #f9e1b5; }
         .order-total { font-size: 1.2rem; font-weight: 900; text-align: right; margin-bottom: 10px; }
-        .btn-action { width: 100%; padding: 10px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: #fff; margin-bottom: 5px; transition: 0.2s;}
+        .btn-action { width: 100%; padding: 10px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: #fff; transition: 0.2s;}
         .btn-action:active { transform: scale(0.98); }
-        .btn-accept { background: #00a14b; } 
-        .btn-dispatch { background: #0d6efd; }
-        .btn-call-driver { background: #8e44ad; } /* Roxo para destacar */
+        .btn-accept { background: #00a14b; } .btn-dispatch { background: #0d6efd; }
 
         /* LAYOUT MEU CARDÁPIO */
         .menu-layout { display: flex; gap: 20px; height: calc(100% - 60px); }
@@ -277,7 +275,7 @@
                     <div id="list-pendente"></div>
                 </div>
                 <div class="kanban-col">
-                    <div class="col-header">Em Preparo <span class="col-count" id="count-preparo">0</span></div>
+                    <div class="col-header">Em Preparo / Aguardando Entregador <span class="col-count" id="count-preparo">0</span></div>
                     <div id="list-preparo"></div>
                 </div>
                 <div class="kanban-col">
@@ -452,7 +450,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, query, where, onSnapshot, doc, updateDoc, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // SUA CONFIGURAÇÃO OFICIAL
         const firebaseConfig = {
             apiKey: "AIzaSyBinV28T4xWvYAnE0Yed1rbsp9dEF_n7Eg",
             authDomain: "dores-delivery.firebaseapp.com",
@@ -469,8 +466,6 @@
         // 1. INICIALIZAÇÃO DA SESSÃO
         // ==========================================
         const loggedStore = JSON.parse(localStorage.getItem('loggedStore'));
-        
-        // Verifica se a loja está logada
         if (!loggedStore || !loggedStore.id) { 
             localStorage.removeItem('loggedStore');
             window.location.href = 'login-vendedor.html'; 
@@ -494,9 +489,7 @@
             loggedStore.status = newStatus;
             localStorage.setItem('loggedStore', JSON.stringify(loggedStore));
             window.updateStatusBtn();
-            try {
-                await updateDoc(doc(db, "stores", loggedStore.id), { status: newStatus });
-            } catch(e) { console.error("Erro ao atualizar status", e) }
+            try { await updateDoc(doc(db, "stores", loggedStore.id), { status: newStatus }); } catch(e) {}
         };
 
         // ==========================================
@@ -579,7 +572,7 @@
         };
 
         // ==========================================
-        // 3. KANBAN DE PEDIDOS E VERIFICAÇÃO DE NOVOS
+        // 3. KANBAN DE PEDIDOS (TEMPO REAL FIREBASE)
         // ==========================================
         const qOrders = query(collection(db, "orders"), where("storeId", "==", loggedStore.id));
 
@@ -587,9 +580,7 @@
             const myOrders = [];
             snapshot.forEach(document => myOrders.push({ id: document.id, ...document.data() }));
 
-            if (previousOrderCount !== -1 && myOrders.length > previousOrderCount) {
-                triggerNewOrderAlert();
-            }
+            if (previousOrderCount !== -1 && myOrders.length > previousOrderCount) { triggerNewOrderAlert(); }
             previousOrderCount = myOrders.length;
 
             const colPendente = document.getElementById('list-pendente'); 
@@ -601,9 +592,15 @@
 
             myOrders.sort((a, b) => b.timestamp - a.timestamp).forEach(order => {
                 const cardHTML = buildOrderCard(order);
-                if(order.status === 'Pendente') { colPendente.innerHTML += cardHTML; cPend++; } 
-                else if(order.status === 'Em Preparo') { colPreparo.innerHTML += cardHTML; cPrep++; } 
-                else if(order.status === 'Saiu para Entrega' || order.status === 'Concluído') { colConcluido.innerHTML += cardHTML; cConc++; }
+                if(order.status === 'Pendente') { 
+                    colPendente.innerHTML += cardHTML; cPend++; 
+                } 
+                else if(order.status === 'Em Preparo' || order.status === 'Aguardando Entregador') { 
+                    colPreparo.innerHTML += cardHTML; cPrep++; 
+                } 
+                else if(order.status === 'Saiu para Entrega' || order.status === 'Concluído') { 
+                    colConcluido.innerHTML += cardHTML; cConc++; 
+                }
             });
             
             document.getElementById('count-pendente').innerText = cPend; 
@@ -632,21 +629,23 @@
             } 
             else if (order.status === 'Em Preparo') { 
                 actionBtn = `
-                <div style="display:flex; flex-direction:column; gap:5px;">
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <button class="btn-action" style="background:#8e44ad; font-size:0.95rem; padding:12px;" onclick="window.updateOrderStatus('${order.id}', 'Aguardando Entregador')">🛎️ Chamar Entregador</button>
                     <div style="display:flex; gap:5px;">
-                        <button class="btn-action" style="background:#f59e0b; flex:1;" onclick="window.updateOrderStatus('${order.id}', 'Saiu para Entrega')">Entregar</button>
-                        <button class="btn-action btn-dispatch" style="flex:1;" onclick="window.updateOrderStatus('${order.id}', 'Concluído')">Concluir</button>
+                        <button class="btn-action" style="flex:1; background:#f59e0b; font-size:0.8rem; padding:10px 5px;" onclick="window.updateOrderStatus('${order.id}', 'Saiu para Entrega')">🛵 Próprio (Saiu)</button>
+                        <button class="btn-action btn-dispatch" style="flex:1; font-size:0.8rem; padding:10px 5px;" onclick="window.updateOrderStatus('${order.id}', 'Concluído')">✅ Entregue</button>
                     </div>
-                    <button class="btn-action btn-call-driver" onclick="window.updateOrderStatus('${order.id}', 'Aguardando Entregador')">🛵 Chamar Entregador</button>
                 </div>`; 
+            }
+            else if (order.status === 'Aguardando Entregador') {
+                actionBtn = `
+                <div style="text-align:center; margin-bottom: 8px; font-size: 0.9rem; color: #8e44ad; font-weight: bold;">⏳ Aguardando entregador aceitar...</div>
+                <button class="btn-action btn-dispatch" onclick="window.updateOrderStatus('${order.id}', 'Concluído')">✅ Forçar Conclusão</button>`;
             }
             else if (order.status === 'Saiu para Entrega') {
                 actionBtn = `
-                <div style="text-align:center; margin-bottom: 8px; font-size: 0.9rem; color: #f59e0b; font-weight: bold;">🛵 Saiu para Entrega</div>
+                <div style="text-align:center; margin-bottom: 8px; font-size: 0.9rem; color: #f59e0b; font-weight: bold;">🛵 Em rota de entrega</div>
                 <button class="btn-action btn-dispatch" onclick="window.updateOrderStatus('${order.id}', 'Concluído')">✅ Marcar como Entregue</button>`;
-            }
-            else if (order.status === 'Aguardando Entregador') {
-                actionBtn = `<div style="text-align:center; padding:10px; color:#8e44ad; font-weight:bold;">Aguardando o entregador aceitar a corrida...</div>`;
             }
             else if (order.status === 'Concluído') {
                 actionBtn = `<div style="text-align:center; color:#00a14b; font-weight:bold; font-size:0.9rem;">Finalizado</div>`;
@@ -663,9 +662,7 @@
         }
         
         window.updateOrderStatus = async (orderId, newStatus) => {
-            try {
-                await updateDoc(doc(db, "orders", orderId), { status: newStatus });
-            } catch(e) { console.error("Erro ao atualizar status", e); }
+            try { await updateDoc(doc(db, "orders", orderId), { status: newStatus }); } catch(e) { console.error(e); }
         };
 
         // ==========================================
@@ -721,7 +718,6 @@
             document.getElementById('rep-semana').innerText = `R$ ${revSemana.toFixed(2)}`;
             document.getElementById('rep-mes').innerText = `R$ ${revMes.toFixed(2)}`;
             document.getElementById('rep-semestre').innerText = `R$ ${revSemestre.toFixed(2)}`;
-
             const avgTicket = orderCount > 0 ? (totalRevenue / orderCount) : 0;
             document.getElementById('rep-revenue').innerText = `R$ ${totalRevenue.toFixed(2)}`;
             document.getElementById('rep-count').innerText = orderCount;
@@ -733,10 +729,7 @@
                 <li><span>💵 Dinheiro</span> <strong>${payCash}</strong></li>
             `;
 
-            const sortedProducts = Object.keys(productSales)
-                .map(name => ({ name, qty: productSales[name].qty, rev: productSales[name].revenue }))
-                .sort((a, b) => b.qty - a.qty).slice(0, 3); 
-
+            const sortedProducts = Object.keys(productSales).map(name => ({ name, qty: productSales[name].qty, rev: productSales[name].revenue })).sort((a, b) => b.qty - a.qty).slice(0, 3); 
             const topContainer = document.getElementById('rep-top-products');
             if(sortedProducts.length === 0) {
                 topContainer.innerHTML = `<li style="justify-content:center; color:#999;">Nenhuma venda registrada ainda.</li>`;
@@ -746,10 +739,7 @@
                     <li>
                         <span class="top-medal">${medals[index]}</span>
                         <div class="top-name">${p.name}</div>
-                        <div class="top-stats">
-                            <span>${p.qty}x vendidos</span>
-                            <strong>R$ ${p.rev.toFixed(2)}</strong>
-                        </div>
+                        <div class="top-stats"><span>${p.qty}x vendidos</span><strong>R$ ${p.rev.toFixed(2)}</strong></div>
                     </li>
                 `).join('');
             }
@@ -762,18 +752,14 @@
         let globalProducts = [];
         let myCategories = ['Geral', 'Destaques'];
 
-        // Escuta os dados gerais da Loja para puxar as categorias
         onSnapshot(doc(db, "stores", loggedStore.id), (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                if (data.categories && Array.isArray(data.categories)) {
-                    myCategories = data.categories;
-                }
+                if (data.categories && Array.isArray(data.categories)) { myCategories = data.categories; }
                 window.loadCategoriesAndProducts();
             }
         });
 
-        // Escuta os Produtos da Loja na Nuvem
         const qProducts = query(collection(db, "products"), where("storeId", "==", loggedStore.id));
         onSnapshot(qProducts, (snapshot) => {
             globalProducts = [];
@@ -832,9 +818,7 @@
             if(catName && catName.trim() !== "") {
                 if(!myCategories.includes(catName.trim())) { 
                     myCategories.push(catName.trim()); 
-                    try {
-                        await updateDoc(doc(db, "stores", loggedStore.id), { categories: myCategories });
-                    } catch(e) { console.error("Erro ao salvar categoria", e); }
+                    try { await updateDoc(doc(db, "stores", loggedStore.id), { categories: myCategories }); } catch(e) {}
                 } 
                 else { alert("Esta categoria já existe!"); }
             }
@@ -843,14 +827,9 @@
         window.deleteCategory = async (catName) => {
             if(confirm(`Tem certeza que deseja excluir a categoria "${catName}"?\nOs produtos serão movidos para "Geral".`)) {
                 myCategories = myCategories.filter(c => c !== catName); 
-                try {
-                    await updateDoc(doc(db, "stores", loggedStore.id), { categories: myCategories });
-                } catch(e) {}
-                
+                try { await updateDoc(doc(db, "stores", loggedStore.id), { categories: myCategories }); } catch(e) {}
                 globalProducts.forEach(async (p) => {
-                    if (p.category === catName) {
-                        try { await updateDoc(doc(db, "products", p.id), { category: 'Geral' }); } catch(e){}
-                    }
+                    if (p.category === catName) { try { await updateDoc(doc(db, "products", p.id), { category: 'Geral' }); } catch(e){} }
                 });
                 if (document.getElementById('ed-category').value === catName) document.getElementById('ed-category').value = 'Geral';
             }
@@ -922,20 +901,14 @@
                 finalPrice = parseFloat(finalVariants[0].price); varTitle = document.getElementById('ed-var-title').value.trim() || 'Escolha uma opção';
             }
             
-            const prodData = {
-                storeId: loggedStore.id, name, desc, price: finalPrice, category,
-                variants: finalVariants, variantTitle: varTitle, modifiers: editingModifiers
-            };
+            const prodData = { storeId: loggedStore.id, name, desc, price: finalPrice, category, variants: finalVariants, variantTitle: varTitle, modifiers: editingModifiers };
             if(editorImageBase64) prodData.image = editorImageBase64;
 
             try {
-                if (currentEditingId) {
-                    await updateDoc(doc(db, "products", currentEditingId), prodData);
-                    alert("Produto atualizado!");
-                } else {
+                if (currentEditingId) { await updateDoc(doc(db, "products", currentEditingId), prodData); alert("Produto atualizado!"); } 
+                else {
                     if(!editorImageBase64) prodData.image = 'https://via.placeholder.com/150';
-                    await addDoc(collection(db, "products"), prodData);
-                    alert("Produto salvo!");
+                    await addDoc(collection(db, "products"), prodData); alert("Produto salvo!");
                 }
                 window.clearEditor();
             } catch(e) { console.error(e); alert("Erro ao salvar produto."); }
@@ -944,14 +917,10 @@
         window.deleteEditingProduct = async () => {
             if(!currentEditingId) return;
             if(confirm("Apagar este produto permanentemente?")) {
-                try {
-                    await deleteDoc(doc(db, "products", currentEditingId));
-                    window.clearEditor();
-                } catch(e) { console.error("Erro ao deletar", e); }
+                try { await deleteDoc(doc(db, "products", currentEditingId)); window.clearEditor(); } catch(e) {}
             }
         };
 
-        // Modificadores Modal
         window.updateModBadge = () => { document.getElementById('mod-count-badge').innerText = editingModifiers.length; document.getElementById('mod-header-count').innerText = editingModifiers.length; };
         window.openModifiersModal = () => { document.getElementById('modifiers-modal').classList.add('active'); window.renderModifiersScreen(); };
         window.closeModifiersModal = () => { document.getElementById('modifiers-modal').classList.remove('active'); window.updateModBadge(); };
