@@ -335,8 +335,8 @@
                             <div class="form-group" style="flex: 1; min-width: 100px;">
                                 <label>Promoção</label>
                                 <select id="ed-promo" class="form-input">
-                                    <option value="false">❌ Não</option>
-                                    <option value="true">⭐ Sim</option>
+                                    <option value="false">Não</option>
+                                    <option value="true">Sim</option>
                                 </select>
                             </div>
                         </div>
@@ -353,11 +353,20 @@
                             </div>
                             
                             <div id="panel-simples">
-                                <div class="form-group">
-                                    <label>Preço Fixo</label>
-                                    <div class="price-input-wrapper">
-                                        <span>R$</span>
-                                        <input type="number" id="ed-price" class="form-input" step="0.01" placeholder="0.00">
+                                <div style="display: flex; gap: 15px;">
+                                    <div class="form-group" style="flex: 1;">
+                                        <label>Preço</label>
+                                        <div class="price-input-wrapper" style="margin-bottom: 0;">
+                                            <span>R$</span>
+                                            <input type="number" id="ed-price" class="form-input" step="0.01" placeholder="0.00">
+                                        </div>
+                                    </div>
+                                    <div class="form-group" style="flex: 1;">
+                                        <label>Vendido por</label>
+                                        <select id="ed-unit" class="form-input">
+                                            <option value="un">Unidade</option>
+                                            <option value="kg">Quilo (Kg)</option>
+                                        </select>
                                     </div>
                                 </div>
                             </div>
@@ -886,10 +895,19 @@
                     blockHTML += `<div style="padding: 15px; font-size:0.85rem; color:#999; text-align:center;">Nenhum produto nesta categoria.</div>`; 
                 } else {
                     prodsInCat.forEach(p => {
-                        let subText = (p.variants && p.variants.length > 0) ? `${p.variants.length} Variantes` : `R$ ${(p.price || 0).toFixed(2)}`;
+                        // VERIFICA SE É KG OU UNIDADE
+                        let subText = '';
+                        if (p.variants && p.variants.length > 0) {
+                            subText = `${p.variants.length} Variantes`;
+                        } else {
+                            subText = p.unit === 'kg' ? `R$ ${(p.price || 0).toFixed(2)} /kg` : `R$ ${(p.price || 0).toFixed(2)}`;
+                        }
+
                         let inactiveStyle = p.isActive === false ? 'opacity: 0.5; background: #fafafa;' : '';
                         let inactiveBadge = p.isActive === false ? '<span style="background:#ea1d2c; color:#fff; font-size:0.6rem; padding:2px 6px; border-radius:4px; margin-left:5px;">Inativo</span>' : '';
-                        let promoBadge = p.isPromo === true ? '<span style="background:#f59e0b; color:#fff; font-size:0.6rem; padding:2px 6px; border-radius:4px; margin-left:5px;">⭐ Promoção</span>' : '';
+                        
+                        // 🟢 ETIQUETA DE PROMOÇÃO NO PAINEL 🟢
+                        let promoBadge = p.isPromo === true ? '<span style="background:#ea1d2c; color:#fff; font-size:0.6rem; font-weight:bold; padding:2px 6px; border-radius:12px; margin-left:6px; letter-spacing:0.5px; text-transform:uppercase;">Promoção</span>' : '';
                         
                         blockHTML += `
                             <div class="product-row" id="row-prod-${p.id}" onclick="window.openEditorEdit('${p.id}')" style="${inactiveStyle}">
@@ -910,6 +928,7 @@
             editorImageBase64 = ''; document.getElementById('ed-price').value = ''; document.getElementById('ed-var-title').value = '';
             document.getElementById('ed-status').value = 'true';
             document.getElementById('ed-promo').value = 'false';
+            document.getElementById('ed-unit').value = 'un';
             editingVariants = []; editingModifiers = []; window.updateModBadge(); window.setPriceType('simples'); 
             document.querySelectorAll('.product-row').forEach(row => row.classList.remove('selected'));
         };
@@ -926,8 +945,11 @@
                 if(prod.image && prod.image !== 'https://via.placeholder.com/150') { editorImageBase64 = prod.image; document.getElementById('ed-img-preview').src = editorImageBase64; document.getElementById('ed-img-preview').style.display = 'block'; }
                 if (prod.variants && prod.variants.length > 0) { window.setPriceType('variantes'); editingVariants = [...prod.variants]; document.getElementById('ed-var-title').value = prod.variantTitle || ''; window.renderVariantList(); } 
                 else { window.setPriceType('simples'); document.getElementById('ed-price').value = prod.price; }
+                
                 document.getElementById('ed-status').value = prod.isActive !== false ? 'true' : 'false';
                 document.getElementById('ed-promo').value = prod.isPromo === true ? 'true' : 'false';
+                document.getElementById('ed-unit').value = prod.unit || 'un';
+
                 editingModifiers = prod.modifiers ? JSON.parse(JSON.stringify(prod.modifiers)) : []; window.updateModBadge();
             }
         };
@@ -936,6 +958,7 @@
             const name = document.getElementById('ed-name').value.trim(); const desc = document.getElementById('ed-desc').value.trim(); const category = document.getElementById('ed-category').value;
             const isActive = document.getElementById('ed-status').value === 'true';
             const isPromo = document.getElementById('ed-promo').value === 'true';
+            const unit = document.getElementById('ed-unit').value;
             let finalPrice = 0; let finalVariants = []; let varTitle = '';
             
             if (!name) return alert("O Nome do produto é obrigatório!");
@@ -949,7 +972,7 @@
             
             const prodData = {
                 storeId: loggedStore.id, name, desc, price: finalPrice, category,
-                isActive, isPromo,
+                isActive, isPromo, unit,
                 variants: finalVariants, variantTitle: varTitle, modifiers: editingModifiers
             };
             if(editorImageBase64) prodData.image = editorImageBase64;
