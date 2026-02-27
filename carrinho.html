@@ -97,6 +97,10 @@
                     <span>Subtotal</span>
                     <span id="subtotal-val">R$ 0,00</span>
                 </div>
+                <div class="summary-line">
+                    <span>Taxa de Entrega</span>
+                    <span id="delivery-fee-val" style="color: #777;">Calculando...</span>
+                </div>
                 <div class="summary-total">
                     <span>Total</span>
                     <span id="total-val">R$ 0,00</span>
@@ -160,8 +164,9 @@
     </main>
 
     <script type="module">
+        // Importamos também o getDoc e o doc para buscar a taxa da loja na nuvem
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         // SUA CONFIGURAÇÃO OFICIAL
         const firebaseConfig = {
@@ -178,8 +183,9 @@
 
         let cart = JSON.parse(localStorage.getItem('cart')) || [];
         let finalTotal = 0;
+        let deliveryFee = 0; // Variável global para guardar a taxa de entrega
         
-        // Verifica se o usuário tem sessão ativa (Criada pelo novo cadastro.html)
+        // Verifica se o usuário tem sessão ativa
         const loggedCustomer = JSON.parse(localStorage.getItem('loggedCustomer'));
         const isLogged = !!loggedCustomer || localStorage.getItem('isLogged') === 'true'; // Compatibilidade
         const userName = loggedCustomer ? loggedCustomer.name : (localStorage.getItem('userName') || 'Cliente');
@@ -197,7 +203,8 @@
             }
         };
 
-        window.loadCart = () => {
+        // Transformamos a função em async para poder buscar a taxa no Firebase
+        window.loadCart = async () => {
             if (cart.length === 0) {
                 document.getElementById('empty-state').style.display = 'block';
                 document.getElementById('cart-content').style.display = 'none';
@@ -207,8 +214,9 @@
             document.getElementById('empty-state').style.display = 'none';
             document.getElementById('cart-content').style.display = 'block';
 
-            // Pega o nome da loja baseada no primeiro item do carrinho
+            // Pega o nome e o ID da loja baseada no primeiro item do carrinho
             document.getElementById('cart-store-name').innerText = cart[0].store;
+            const storeId = cart[0].storeId;
 
             let subtotal = 0;
             const container = document.getElementById('cart-items-container');
@@ -234,8 +242,38 @@
                 `;
             }).join('');
 
-            finalTotal = subtotal;
             document.getElementById('subtotal-val').innerText = `R$ ${subtotal.toFixed(2)}`;
+
+            // 🟢 LÓGICA DA TAXA DE ENTREGA 🟢
+            try {
+                const storeRef = doc(db, "stores", storeId);
+                const storeSnap = await getDoc(storeRef);
+                
+                if (storeSnap.exists() && storeSnap.data().deliveryFee) {
+                    deliveryFee = parseFloat(storeSnap.data().deliveryFee);
+                } else {
+                    deliveryFee = 0; // Se a loja não configurou, é 0 (Grátis)
+                }
+
+                // Atualiza o texto na tela
+                const feeTextElement = document.getElementById('delivery-fee-val');
+                if (deliveryFee > 0) {
+                    feeTextElement.innerText = `R$ ${deliveryFee.toFixed(2)}`;
+                    feeTextElement.style.color = '#555';
+                    feeTextElement.style.fontWeight = 'normal';
+                } else {
+                    feeTextElement.innerText = 'Grátis';
+                    feeTextElement.style.color = '#00a14b';
+                    feeTextElement.style.fontWeight = 'bold';
+                }
+            } catch (error) {
+                console.error("Erro ao buscar a taxa de entrega da loja:", error);
+                document.getElementById('delivery-fee-val').innerText = "Grátis";
+                deliveryFee = 0;
+            }
+
+            // Calcula o total com a taxa inclusa
+            finalTotal = subtotal + deliveryFee;
             document.getElementById('total-val').innerText = `R$ ${finalTotal.toFixed(2)}`;
 
             if (isLogged) {
@@ -279,15 +317,14 @@
             const addressString = `${rua}, ${num} - ${bairro} ${comp ? '('+comp+')' : ''}`;
             const btn = document.getElementById('btn-finish');
 
-            // Feedback visual para o cliente não clicar duas vezes
             btn.innerText = "Enviando Pedido...";
             btn.disabled = true;
 
             // MONTA O PEDIDO
             const newOrder = {
                 date: new Date().toLocaleString('pt-BR'),
-                timestamp: Date.now(), // Para ordenação exata
-                storeId: cart[0].storeId, // É ISTO QUE FAZ CHEGAR NO PAINEL CERTO!
+                timestamp: Date.now(), 
+                storeId: cart[0].storeId,
                 storeName: cart[0].store,
                 customerName: userName,
                 customer: {
@@ -296,9 +333,10 @@
                     address: addressString
                 },
                 items: cart,
+                deliveryFee: deliveryFee, // Guarda na nuvem a taxa cobrada
                 total: finalTotal,
                 paymentMethod: paymentString,
-                status: 'Pendente' // Status inicial que aciona o alerta no vendedor
+                status: 'Pendente' 
             };
 
             try {
