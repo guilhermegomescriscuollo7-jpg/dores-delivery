@@ -48,13 +48,13 @@
         .info-text strong { display: block; color: #111; font-size: 1rem; margin-bottom: 3px; }
         .info-text p { color: #555; font-size: 0.9rem; line-height: 1.4; margin-bottom: 0; }
 
-        /* NOVO BOTÃO DE GPS GIGANTE E CHAMATIVO */
+        /* BOTÃO DE GPS GIGANTE E CHAMATIVO (AGORA VERMELHO) */
         .btn-gps { 
             display: flex; 
             justify-content: center; 
             align-items: center; 
             gap: 8px; 
-            background: #4285F4; /* Azul Google Maps */
+            background: #ea1d2c; 
             color: #fff; 
             border: none; 
             padding: 14px 15px; 
@@ -65,13 +65,13 @@
             margin-top: 15px; 
             transition: 0.2s; 
             width: 100%; 
-            box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3); 
+            box-shadow: 0 4px 12px rgba(234, 29, 44, 0.3); 
             text-transform: uppercase; 
         }
         .btn-gps:active { 
             transform: scale(0.97); 
-            background: #3367d6; 
-            box-shadow: 0 2px 6px rgba(66, 133, 244, 0.3); 
+            background: #c81824; 
+            box-shadow: 0 2px 6px rgba(234, 29, 44, 0.3); 
         }
 
         /* Estilos específicos para a caixa de endereço da loja */
@@ -297,6 +297,7 @@
                         const cep = storeInfo.cep ? `CEP: ${storeInfo.cep}` : '';
                         const doc = storeInfo.doc ? `CNPJ/CPF: ${storeInfo.doc}` : '';
                         
+                        // EXIBE A CIDADE ANTES DA RUA DA LOJA
                         storeDetailsHtml = `
                             <div class="store-address-box">
                                 <p>📍 <strong>${cityInfo ? cityInfo + ' ➔ ' : ''}${street}</strong></p>
@@ -307,13 +308,16 @@
                         storeDetailsHtml = `<div class="store-address-box"><p>Aguardando dados de endereço...</p></div>`;
                     }
 
-                    // NOME DA CIDADE E BOTÃO DE GPS PARA O CLIENTE
+                    // 🟢 NOME DA CIDADE, REMOÇÃO DO (CASA) E BOTÃO DE GPS
                     const customerCity = "Doresópolis"; 
-                    const displayCustomerAddress = `${customerCity} ➔ ${order.customer.address}`;
                     
-                    // Link oficial do Google Maps com pesquisa direta
-                    const addressForGPS = encodeURIComponent(`${customerCity}, MG, ${order.customer.address}`);
-                    const linkGPS = `http://maps.google.com/maps?q=${addressForGPS}`;
+                    // Remove qualquer complemento entre parênteses para exibir e pesquisar no GPS
+                    const cleanAddress = order.customer.address.replace(/\s*\([^)]*\)/g, '').trim();
+                    const displayCustomerAddress = `${customerCity} ➔ ${cleanAddress}`;
+                    
+                    // Link oficial do Google Maps com pesquisa limpa e direta
+                    const addressForGPS = encodeURIComponent(`${customerCity}, MG, ${cleanAddress}`);
+                    const linkGPS = `http://googleusercontent.com/maps.google.com/maps?q=${addressForGPS}`;
                     const btnGPSHtml = `<a href="${linkGPS}" target="_blank" class="btn-gps">🗺️ Traçar Rota no GPS</a>`;
                     
                     let btnHtml = '';
