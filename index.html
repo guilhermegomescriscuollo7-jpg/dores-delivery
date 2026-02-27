@@ -6,9 +6,20 @@
     <title>Dores Delivery - Início</title>
     <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <script>
+        if (sessionStorage.getItem('splashShown') === 'true') {
+            document.documentElement.classList.add('skip-splash');
+        }
+    </script>
+
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', sans-serif; }
         body { background-color: #f8f8f8; color: #3e3e3e; padding-bottom: 110px; overflow-x: hidden; }
+
+        /* Esconde o splash e o patrocinador instantaneamente se a classe estiver presente */
+        .skip-splash #splash-screen, 
+        .skip-splash #sponsor-wrapper { display: none !important; }
 
         /* =========================================================
            BOTÃO DE INSTALAR APP (PWA)
@@ -41,20 +52,17 @@
         .splash-swoosh { width: 60px; height: auto; transform: rotate(-10deg); }
         .splash-text { font-size: 2.5rem; font-weight: 700; color: #ea1d2c; letter-spacing: -1.5px; margin: 0; }
 
-        /* Fundo branco que bloqueia a visão do app até os patrocínios acabarem */
         #sponsor-wrapper {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #fff; z-index: 99998;
             display: none; align-items: center; justify-content: center;
         }
 
-        /* Container apenas para a imagem receber o efeito */
         #sponsor-content {
             width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
         }
         #sponsor-content img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* Efeitos Dinâmicos do Patrocinador */
         .effect-fade { opacity: 0; transition: opacity 0.6s ease; }
         .effect-fade.active { opacity: 1; }
 
@@ -65,7 +73,7 @@
         .effect-slide.active { transform: translateY(0); }
 
         /* =========================================================
-           CABEÇALHO
+           CABEÇALHO E MÓDULOS DE COMPRA (MANTIDOS)
            ========================================================= */
         .brand-header { background: #fff; padding: 20px 20px; position: relative; border-bottom: 1px solid #f2f2f2; display: flex; justify-content: space-between; align-items: center; }
         .brand-logo-container { display: flex; align-items: center; gap: 8px; flex-grow: 1; }
@@ -80,17 +88,11 @@
         .header-cart-btn:active { transform: scale(0.9); background: #fdfdfd; }
         .cart-badge { position: absolute; top: -5px; right: -5px; background: #ea1d2c; color: white; font-size: 0.75rem; padding: 2px 7px; border-radius: 50%; border: 2px solid #fff; font-weight: bold; display: none; }
 
-        /* =========================================================
-           CARROSSEL DE BANNERS ROTATIVOS
-           ========================================================= */
         .banner-carousel-wrapper { background: #f8f8f8; padding: 15px 15px 0; display: none; }
         .banner-track { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; border-radius: 12px; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
         .banner-track::-webkit-scrollbar { display: none; }
         .banner-slide { flex: 0 0 100%; height: 150px; border-radius: 12px; object-fit: cover; scroll-snap-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
 
-        /* =========================================================
-           CATEGORIAS
-           ========================================================= */
         .button-scroll-container { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 12px; padding: 15px; background: #f8f8f8; scrollbar-width: none; -webkit-overflow-scrolling: touch; width: 100%; }
         .button-scroll-container::-webkit-scrollbar { display: none; }
         .button-item { display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fff; padding: 12px 5px; border-radius: 16px; text-align: center; cursor: pointer; border: 2px solid transparent; transition: all 0.3s ease; flex: 0 0 auto; width: 85px; box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
@@ -102,9 +104,6 @@
         .button-item.active .filter-icon { color: #fff; } 
         .section-title { padding: 5px 15px 10px; font-size: 1.1rem; font-weight: 700; color: #333; }
 
-        /* =========================================================
-           LISTA DE LOJAS
-           ========================================================= */
         .store-list { padding: 0 15px; }
         .store-card { display: flex; align-items: center; padding: 15px; margin-bottom: 12px; border-radius: 12px; cursor: pointer; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.04); border: 1px solid #f2f2f2; transition: 0.2s; }
         .store-card:active { transform: scale(0.98); background-color: #f9f9f9; }
@@ -116,9 +115,6 @@
         .store-details { font-size: 0.8rem; color: #717171; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
         .store-details .dot { color: #ccc; font-size: 0.6rem; }
 
-        /* =========================================================
-           MODAIS E CARDÁPIO DA LOJA
-           ========================================================= */
         #menu-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f8f8f8; z-index: 10000; transform: translateY(100%); transition: transform 0.3s ease; overflow-y: auto; padding-bottom: 20px; display: block; }
         #menu-modal.active { transform: translateY(0); }
         .store-cover { height: 160px; background-color: #ea1d2c; background-size: cover; background-position: center; position: relative; }
@@ -149,9 +145,6 @@
         .prod-info-list .price { font-weight: 500; color: #333; font-size: 0.95rem; }
         .badge-top { position: absolute; top: 0; left: 0; background: #ea1d2c; color: #fff; font-size: 0.65rem; padding: 4px 8px; border-bottom-right-radius: 8px; font-weight: bold; z-index: 2; }
 
-        /* =========================================================
-           NOVO LAYOUT: GRID PARA DESTAQUES
-           ========================================================= */
         .products-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 0 15px 15px 15px; background: #fff; }
         .prod-card-grid { display: flex; flex-direction: column; border: 1px solid #f2f2f2; border-radius: 12px; overflow: hidden; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 6px rgba(0,0,0,0.03); background: #fff; }
         .prod-card-grid:active { transform: scale(0.98); }
@@ -162,7 +155,6 @@
         .prod-card-grid .desc { font-size: 0.75rem; color: #717171; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 8px; }
         .prod-card-grid .price { font-weight: 700; color: #ea1d2c; font-size: 0.95rem; margin-top: auto; }
 
-        /* MODAL DO PRODUTO */
         #product-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 10001; transform: translateY(100%); transition: transform 0.3s ease; overflow-y: auto; padding-bottom: 100px; display: block; }
         #product-modal.active { transform: translateY(0); }
         .prod-img-header { position: relative; width: 100%; height: 300px; background: #f2f2f2; }
@@ -223,11 +215,7 @@
         </div>
         
         <div class="header-cart-btn" onclick="window.location.href='carrinho.html'">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ea1d2c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="9" cy="21" r="1"></circle>
-                <circle cx="20" cy="21" r="1"></circle>
-                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-            </svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ea1d2c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
             <span class="cart-badge" id="cart-count">0</span>
         </div>
     </div>
@@ -240,9 +228,7 @@
         <button class="btn-install" id="btn-install-app">Instalar</button>
     </div>
 
-    <div class="banner-carousel-wrapper" id="banner-wrapper">
-        <div class="banner-track" id="banner-track"></div>
-    </div>
+    <div class="banner-carousel-wrapper" id="banner-wrapper"><div class="banner-track" id="banner-track"></div></div>
 
     <section class="button-scroll-container" id="category-filters">
         <div class="button-item active" onclick="window.filterCategory('Todos', this)"><svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon"><path d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z"/></svg><span>Todos</span></div>
@@ -309,7 +295,6 @@
         let prodQty = 1; let basePriceCalc = 0; let currentCategoryFilter = null; 
         let cart = JSON.parse(localStorage.getItem('cart')) || [];
 
-        // PWA
         let deferredPrompt;
         const installBanner = document.getElementById('install-banner');
         const installBtn = document.getElementById('btn-install-app');
@@ -317,11 +302,7 @@
         installBtn.addEventListener('click', async () => { installBanner.style.display = 'none'; if (deferredPrompt) { deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt = null; } });
         if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Falhou:', err)); }); }
         
-        // ==========================================
-        // O CÉREBRO DOS PATROCINADORES EM SEQUÊNCIA
-        // ==========================================
         let allActiveSponsors = [];
-
         onSnapshot(collection(db, "sponsors"), (snapshot) => {
             allActiveSponsors = [];
             snapshot.forEach(doc => allActiveSponsors.push(doc.data()));
@@ -329,11 +310,21 @@
         });
 
         window.addEventListener('load', () => {
+            const splash = document.getElementById('splash-screen');
+            const sponsorWrapper = document.getElementById('sponsor-wrapper');
+            const sponsorContent = document.getElementById('sponsor-content');
+
+            // 🟢 LÓGICA DE SESSÃO: SÓ MOSTRA NA PRIMEIRA VEZ 🟢
+            if (sessionStorage.getItem('splashShown') === 'true') {
+                if (splash) splash.style.display = 'none';
+                if (sponsorWrapper) sponsorWrapper.style.display = 'none';
+                window.updateCartBadge();
+                return;
+            }
+
+            sessionStorage.setItem('splashShown', 'true');
+
             setTimeout(() => {
-                const splash = document.getElementById('splash-screen');
-                const sponsorWrapper = document.getElementById('sponsor-wrapper');
-                const sponsorContent = document.getElementById('sponsor-content');
-                
                 if (splash) {
                     if(allActiveSponsors.length > 0 && sponsorWrapper) { sponsorWrapper.style.display = 'flex'; }
                     splash.classList.add('hidden'); 
@@ -366,6 +357,8 @@
                                 }, tempoMs); 
                             }
                             mostrarProximoPatrocinador(); 
+                        } else if (sponsorWrapper) {
+                            sponsorWrapper.style.display = 'none';
                         }
                     }, 500); 
                 }
@@ -373,7 +366,6 @@
             window.updateCartBadge();
         });
 
-        // BANNERS CARROSSEL
         onSnapshot(collection(db, "banners"), (snapshot) => {
             const track = document.getElementById('banner-track');
             const wrapper = document.getElementById('banner-wrapper');
@@ -508,7 +500,6 @@
                 let itemsHTML = categories.map(cat => {
                     const prods = availableProducts.filter(p => (p.category || 'Geral') === cat);
                     
-                    // 🟢 VERIFICA SE É A CATEGORIA "DESTAQUES" PARA RENDERIZAR EM GRELHA 🟢
                     const isGrid = cat === 'Destaques';
                     const containerClass = isGrid ? 'products-grid' : 'products-vertical';
                     const cardClass = isGrid ? 'prod-card-grid' : 'prod-card-list';
@@ -521,33 +512,16 @@
                                     let badgeTop = (cat === 'Destaques' && index === 0) ? '<div class="badge-top">Mais pedido</div>' : '';
                                     
                                     if(isGrid) {
-                                        // LAYOUT EM GRELHA (Lado a lado)
                                         let promoBadgeGrid = p.isPromo === true ? '<div style="position:absolute; top:5px; right:5px; background:#ea1d2c; color:#fff; font-size:0.6rem; font-weight:bold; padding:2px 6px; border-radius:12px; z-index:2; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">Promoção</div>' : '';
                                         return `<div class="${cardClass}" onclick="window.openProductModal('${p.id}')">
-                                                    <div class="img-wrapper">
-                                                        <img src="${p.image || 'https://via.placeholder.com/150'}" alt="Foto Produto">
-                                                        ${badgeTop}
-                                                        ${promoBadgeGrid}
-                                                    </div>
-                                                    <div class="prod-info-list">
-                                                        <div class="name">${p.name}</div>
-                                                        <div class="desc">${p.desc || ''}</div>
-                                                        <div class="price">${displayPrice}</div>
-                                                    </div>
+                                                    <div class="img-wrapper"><img src="${p.image || 'https://via.placeholder.com/150'}" alt="Foto Produto">${badgeTop}${promoBadgeGrid}</div>
+                                                    <div class="prod-info-list"><div class="name">${p.name}</div><div class="desc">${p.desc || ''}</div><div class="price">${displayPrice}</div></div>
                                                 </div>`;
                                     } else {
-                                        // LAYOUT LISTA NORMAL (Um por baixo do outro)
                                         let promoBadgeList = p.isPromo === true ? '<span style="background:#ea1d2c; color:#fff; font-size:0.65rem; font-weight:800; padding:4px 8px; border-radius:12px; margin-left:8px; display:inline-flex; align-items:center; letter-spacing:0.5px; text-transform:uppercase; box-shadow: 0 2px 4px rgba(234, 29, 44, 0.2);">Promoção</span>' : '';
                                         return `<div class="${cardClass}" onclick="window.openProductModal('${p.id}')">
-                                                    <div class="img-wrapper">
-                                                        <img src="${p.image || 'https://via.placeholder.com/150'}" alt="Foto Produto">
-                                                        ${badgeTop}
-                                                    </div>
-                                                    <div class="prod-info-list">
-                                                        <div class="name" style="display:flex; align-items:center; flex-wrap:wrap; gap:4px;">${p.name} ${promoBadgeList}</div>
-                                                        <div class="desc">${p.desc || ''}</div>
-                                                        <div class="price">${displayPrice}</div>
-                                                    </div>
+                                                    <div class="img-wrapper"><img src="${p.image || 'https://via.placeholder.com/150'}" alt="Foto Produto">${badgeTop}</div>
+                                                    <div class="prod-info-list"><div class="name" style="display:flex; align-items:center; flex-wrap:wrap; gap:4px;">${p.name} ${promoBadgeList}</div><div class="desc">${p.desc || ''}</div><div class="price">${displayPrice}</div></div>
                                                 </div>`;
                                     }
                                 }).join('')}
@@ -576,7 +550,15 @@
             activeProduct = currentStoreProducts.find(p => p.id === productId); if(!activeProduct) return;
             prodQty = 1; document.getElementById('p-modal-qty').innerText = prodQty; document.getElementById('p-modal-obs').value = ''; window.updateObsCount();
             document.getElementById('p-modal-img').src = activeProduct.image || 'https://via.placeholder.com/600x400'; document.getElementById('p-modal-name').innerText = activeProduct.name; document.getElementById('p-modal-desc').innerText = activeProduct.desc || '';
-            basePriceCalc = activeProduct.price > 0 ? activeProduct.price : 0; document.getElementById('p-modal-price').innerText = `R$ ${basePriceCalc.toFixed(2)}`;
+            
+            // Corrige se basePriceCalc era unitário ou KG e prepara para o carrinho
+            if (activeProduct.unit === 'kg' && activeProduct.weight) {
+                basePriceCalc = activeProduct.priceKg * activeProduct.weight;
+            } else {
+                basePriceCalc = activeProduct.price > 0 ? activeProduct.price : 0;
+            }
+            
+            document.getElementById('p-modal-price').innerText = `R$ ${basePriceCalc.toFixed(2)}`;
 
             const varContainer = document.getElementById('p-modal-variants');
             if (activeProduct.variants && activeProduct.variants.length > 0) {
