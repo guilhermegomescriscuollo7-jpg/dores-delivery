@@ -418,7 +418,20 @@
 
         <section id="configuracoes" class="section">
             <h2>Configurações da Loja</h2>
+            
             <div class="editor-card">
+                <div class="card-header-flex">
+                    <span class="card-title" style="font-size: 1.1rem;">🛵 Taxa de Entrega da Loja</span>
+                </div>
+                <p style="font-size: 0.85rem; color: #777; margin-bottom: 15px;">Defina o valor da entrega cobrado aos seus clientes (aparecerá no aplicativo).</p>
+                <div class="form-group">
+                    <label>Valor da Taxa (R$)</label>
+                    <input type="number" id="cfg-delivery-fee" class="form-input" step="0.01" placeholder="Ex: 5.00 ou deixe 0 para Grátis">
+                </div>
+                <button class="btn-save-prod" onclick="window.saveDeliveryFee()" style="margin-top: 10px; width: 100%; padding: 15px; font-size: 1rem;">Salvar Taxa</button>
+            </div>
+
+            <div class="editor-card" style="margin-top: 20px;">
                 <div class="card-header-flex">
                     <span class="card-title" style="font-size: 1.1rem;">⏳ Horário de Funcionamento</span>
                 </div>
@@ -528,7 +541,6 @@
         document.getElementById('ui-store-name').innerText = loggedStore.name;
         document.getElementById('ui-store-logo').src = loggedStore.logo || 'https://via.placeholder.com/80';
         
-        // 🟢 CÁLCULO INTELIGENTE DO BOTÃO DE STATUS 🟢
         window.updateStatusBtn = () => {
             const btn = document.getElementById('btn-toggle-status');
             
@@ -659,7 +671,7 @@
         };
 
         // ==========================================
-        // LÓGICA DE HORÁRIOS DE FUNCIONAMENTO
+        // LÓGICA DE HORÁRIOS E TAXA DE ENTREGA
         // ==========================================
         const daysOfWeek = [
             { id: 'seg', name: 'Segunda-feira' },
@@ -712,6 +724,17 @@
             }
         };
 
+        window.saveDeliveryFee = async () => {
+            const feeInput = document.getElementById('cfg-delivery-fee').value;
+            const fee = feeInput === '' ? 0 : parseFloat(feeInput);
+            try {
+                await updateDoc(doc(db, "stores", loggedStore.id), { deliveryFee: fee });
+                alert("Taxa de entrega atualizada com sucesso!");
+            } catch(e) {
+                alert("Erro ao salvar.");
+            }
+        };
+
         // ==========================================
         // 3. KANBAN DE PEDIDOS (TEMPO REAL FIREBASE)
         // ==========================================
@@ -739,7 +762,6 @@
                 else if(order.status === 'Em Preparo' || order.status === 'Aguardando Entregador') { 
                     colPreparo.innerHTML += cardHTML; cPrep++; 
                 } 
-                // 🟢 AGORA O ENTREGUE TAMBÉM VAI PARA A COLUNA DE CONCLUÍDOS DO LOJISTA
                 else if(order.status === 'Saiu para Entrega' || order.status === 'Entregue' || order.status === 'Concluído') { 
                     colConcluido.innerHTML += cardHTML; cConc++; 
                 }
@@ -751,6 +773,18 @@
             
             window.loadReports(myOrders);
         });
+
+        // 🟢 LÓGICA DE CHAMAR ENTREGADOR COM AVISO 🟢
+        window.callPlatformDriver = async (orderId) => {
+            if(confirm("Chamar o entregador da plataforma destina R$ 5,00 desta corrida para o entregador (o cliente pagou a taxa combinada no carrinho). Confirmar chamada?")) {
+                try {
+                    await updateDoc(doc(db, "orders", orderId), { 
+                        status: 'Aguardando Entregador',
+                        platformDriverFee: 5.00 
+                    });
+                } catch(e) { console.error(e); }
+            }
+        };
 
         function buildOrderCard(order) {
             const itemsList = order.items.map(i => {
@@ -772,7 +806,7 @@
             else if (order.status === 'Em Preparo') { 
                 actionBtn = `
                 <div style="display:flex; flex-direction:column; gap:8px;">
-                    <button class="btn-action btn-call-driver" onclick="window.updateOrderStatus('${order.id}', 'Aguardando Entregador')">🛎️ Chamar Entregador</button>
+                    <button class="btn-action btn-call-driver" onclick="window.callPlatformDriver('${order.id}')">🛎️ Chamar Entregador (Custo R$ 5)</button>
                     <div style="display:flex; gap:5px;">
                         <button class="btn-action" style="flex:1; background:#f59e0b; font-size:0.8rem; padding:10px 5px;" onclick="window.updateOrderStatus('${order.id}', 'Saiu para Entrega')">🛵 Próprio (Saiu)</button>
                         <button class="btn-action btn-dispatch" style="flex:1; font-size:0.8rem; padding:10px 5px;" onclick="window.updateOrderStatus('${order.id}', 'Entregue')">✅ Entregue</button>
@@ -905,6 +939,9 @@
                 loggedStore.schedule = data.schedule || null;
                 loggedStore.status = data.status || 'Aberto';
                 localStorage.setItem('loggedStore', JSON.stringify(loggedStore));
+
+                // Carrega a Taxa de Entrega na tela
+                document.getElementById('cfg-delivery-fee').value = data.deliveryFee || '';
 
                 if (data.categories && Array.isArray(data.categories)) { myCategories = data.categories; }
                 
