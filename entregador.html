@@ -17,6 +17,14 @@
 
         .container { padding: 15px; max-width: 600px; margin: 0 auto; }
 
+        /* QUADRO DE GANHOS */
+        .dashboard-header { background: #fff; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); display: flex; justify-content: space-between; align-items: center; border: 1px solid #eee; }
+        .welcome-text { font-size: 0.95rem; color: #555; font-weight: 500; }
+        .welcome-text strong { color: #111; font-size: 1.1rem; display: block; margin-top: 3px; }
+        .earnings-card { text-align: right; }
+        .earnings-label { font-size: 0.75rem; color: #777; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px; }
+        .earnings-value { font-size: 1.6rem; color: #00a14b; font-weight: 900; margin-top: 2px; }
+
         /* ESTADO VAZIO */
         .empty-state { text-align: center; padding: 60px 20px; display: none; }
         .empty-state span { font-size: 3rem; display: block; margin-bottom: 15px; }
@@ -24,7 +32,7 @@
         .empty-state p { color: #717171; font-size: 0.95rem; line-height: 1.4; }
 
         /* CARTÃO DE ENTREGA */
-        .delivery-card { background: #fff; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 2px solid #fd7e14; overflow: hidden; animation: slideIn 0.3s ease; }
+        .delivery-card { background: #fff; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 2px solid #fd7e14; overflow: hidden; animation: slideIn 0.3s ease; position: relative; }
         @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
         .card-header { background: #fff1e6; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #fcd5b4; color: #d9534f; font-weight: 900; }
@@ -32,6 +40,8 @@
 
         .card-body { padding: 15px; }
         
+        .fee-badge { position: absolute; top: 10px; right: 15px; background: #00a14b; color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; box-shadow: 0 2px 5px rgba(0,161,75,0.3); }
+
         .info-row { margin-bottom: 15px; display: flex; gap: 10px; align-items: flex-start; }
         .info-icon { font-size: 1.2rem; margin-top: 2px; }
         .info-text strong { display: block; color: #111; font-size: 1rem; margin-bottom: 3px; }
@@ -54,7 +64,8 @@
 
         /* ABA DE CONCLUÍDOS (Histórico do dia) */
         .history-title { font-size: 1rem; color: #777; margin: 30px 0 15px; border-bottom: 1px solid #ddd; padding-bottom: 5px; display: flex; justify-content: space-between; align-items: center;}
-        .history-card { background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; opacity: 0.7; }
+        .history-card { background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; opacity: 0.8; }
+        .history-fee { font-size: 1rem; color: #00a14b; font-weight: bold; background: #e6f4ea; padding: 4px 8px; border-radius: 6px; }
     </style>
 </head>
 <body>
@@ -69,7 +80,16 @@
 
     <main class="container">
         
-        <div id="driver-welcome" style="margin-bottom: 20px; font-weight: bold; color: #555;"></div>
+        <div class="dashboard-header">
+            <div class="welcome-text">
+                Olá,
+                <strong id="driver-name-display">Entregador</strong>
+            </div>
+            <div class="earnings-card">
+                <div class="earnings-label">Ganhos Hoje</div>
+                <div class="earnings-value" id="today-earnings">R$ 0,00</div>
+            </div>
+        </div>
 
         <div id="empty-state" class="empty-state">
             <span>☕</span>
@@ -103,7 +123,7 @@
         }
         
         const loggedDriver = JSON.parse(loggedDriverStr);
-        document.getElementById('driver-welcome').innerText = `Olá, ${loggedDriver.name}! Boas entregas.`;
+        document.getElementById('driver-name-display').innerText = loggedDriver.name;
 
         window.logoutDriver = () => {
             if (confirm("Tem certeza que deseja encerrar seu turno e sair?")) {
@@ -166,14 +186,12 @@
         let currentActiveDeliveries = [];
         let currentHistoryDeliveries = [];
 
-        // PASSO A: Escuta a coleção de lojas para ter sempre o endereço completo atualizado
         onSnapshot(collection(db, "stores"), (snapshot) => {
             globalStores = [];
             snapshot.forEach(doc => globalStores.push({ id: doc.id, ...doc.data() }));
-            renderDeliveries(); // Recarrega a tela para garantir que o endereço apareceu
+            renderDeliveries(currentActiveDeliveries, currentHistoryDeliveries);
         });
 
-        // PASSO B: Escuta os pedidos
         const qOrders = query(collection(db, "orders"));
         onSnapshot(qOrders, (snapshot) => {
             const allOrders = [];
@@ -193,7 +211,7 @@
             }
             previousDeliveryCount = pendingDeliveriesCount;
 
-            // Filtra histórico de hoje (Mostra Concluídos ou os que ele já Entregou e aguardam o cliente)
+            // Filtra histórico de hoje
             const todayDate = new Date().toLocaleDateString('pt-BR');
             currentHistoryDeliveries = allOrders.filter(o => {
                 if ((o.status === "Concluído" || o.status === "Concluido" || o.status === "Entregue") && o.driverName === loggedDriver.name) {
@@ -202,26 +220,38 @@
                 return false;
             });
 
-            renderDeliveries();
+            renderDeliveries(currentActiveDeliveries, currentHistoryDeliveries);
         });
 
         // ==========================================
-        // 5. RENDERIZAR TELA COM INFORMAÇÕES COMPLETAS
+        // 5. RENDERIZAR TELA COM GANHOS E INFORMAÇÕES
         // ==========================================
-        function renderDeliveries() {
+        function renderDeliveries(active, history) {
+            
+            // 🟢 ATUALIZA O VALOR DOS GANHOS (R$ 5 por entrega concluída)
+            const todayEarnings = history.reduce((acc, order) => {
+                // Se a loja não mandou valor específico, assume que a taxa padrão é 5.00
+                const fee = order.platformDriverFee ? parseFloat(order.platformDriverFee) : 5.00;
+                return acc + fee;
+            }, 0);
+            document.getElementById('today-earnings').innerText = `R$ ${todayEarnings.toFixed(2).replace('.', ',')}`;
+
             const containerActive = document.getElementById('active-deliveries');
             const emptyState = document.getElementById('empty-state');
             
-            if (currentActiveDeliveries.length === 0) {
+            if (active.length === 0) {
                 emptyState.style.display = 'block';
                 containerActive.innerHTML = '';
             } else {
                 emptyState.style.display = 'none';
                 
-                containerActive.innerHTML = currentActiveDeliveries.sort((a,b) => a.timestamp - b.timestamp).map(order => {
+                containerActive.innerHTML = active.sort((a,b) => a.timestamp - b.timestamp).map(order => {
                     const shortId = order.id.substring(0, 6).toUpperCase();
                     const itemsHtml = order.items.map(i => `<li><b>${i.qty}x</b> ${i.name}</li>`).join('');
                     
+                    // Taxa de entrega desta corrida
+                    const driverFee = order.platformDriverFee ? parseFloat(order.platformDriverFee).toFixed(2) : "5.00";
+
                     // BUSCA INFORMAÇÃO COMPLETA DA LOJA
                     const storeInfo = globalStores.find(s => s.id === order.storeId);
                     let storeDetailsHtml = '';
@@ -252,6 +282,8 @@
 
                     return `
                     <div class="delivery-card">
+                        <div class="fee-badge">💰 + R$ ${driverFee.replace('.', ',')}</div>
+                        
                         <div class="card-header">
                             <span class="order-id">Pedido #${shortId}</span>
                             <span>${order.date ? order.date.split(' ')[1] : ''}</span>
@@ -281,7 +313,7 @@
 
                             <div class="payment-box">
                                 <div>
-                                    <div style="font-size:0.75rem; color:#555;">Forma de Pagamento</div>
+                                    <div style="font-size:0.75rem; color:#555;">Cobrar do Cliente:</div>
                                     <div>${order.paymentMethod}</div>
                                 </div>
                                 <div class="total">
@@ -300,18 +332,20 @@
             const titleHistory = document.getElementById('history-title');
             const countHistory = document.getElementById('history-count');
             
-            if (currentHistoryDeliveries.length > 0) {
+            if (history.length > 0) {
                 titleHistory.style.display = 'flex';
-                countHistory.innerText = currentHistoryDeliveries.length;
-                containerHistory.innerHTML = currentHistoryDeliveries.sort((a,b) => b.timestamp - a.timestamp).map(order => {
+                countHistory.innerText = history.length;
+                containerHistory.innerHTML = history.sort((a,b) => b.timestamp - a.timestamp).map(order => {
                     const shortId = order.id.substring(0, 6).toUpperCase();
+                    const driverFee = order.platformDriverFee ? parseFloat(order.platformDriverFee).toFixed(2) : "5.00";
+                    
                     return `
                     <div class="history-card">
                         <div>
                             <strong>#${shortId}</strong> - ${order.customerName}<br>
                             <span style="font-size:0.8rem; color:#777;">${order.storeName}</span>
                         </div>
-                        <div style="color:#00a14b; font-weight:bold;">Entregue</div>
+                        <div class="history-fee">+ R$ ${driverFee.replace('.', ',')}</div>
                     </div>`;
                 }).join('');
             } else {
@@ -340,7 +374,7 @@
         window.confirmDelivery = async (orderId, customerName) => {
             if(confirm(`Tem certeza que já entregou o pedido ao cliente ${customerName}?`)) {
                 try {
-                    // 🟢 MUDA PARA "ENTREGUE" PARA ESPERAR O CLIENTE
+                    // 🟢 MUDA PARA "ENTREGUE" PARA ESPERAR O CLIENTE 🟢
                     await updateDoc(doc(db, "orders", orderId), { 
                         status: "Entregue" 
                     });
