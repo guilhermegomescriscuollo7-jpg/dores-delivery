@@ -248,6 +248,7 @@
         <ul class="nav-menu">
             <li class="nav-item active" onclick="window.switchTab('pedidos', this)">📋 Gestão de Pedidos</li>
             <li class="nav-item" onclick="window.switchTab('cardapio', this)">🍔 Meu Cardápio</li>
+            <li class="nav-item" onclick="window.switchTab('configuracoes', this)">⚙️ Configurações</li>
             <li class="nav-item" onclick="window.switchTab('relatorios', this)">📊 Relatórios</li>
         </ul>
         <div class="btn-logout" onclick="window.logoutStore()">Sair do Sistema</div>
@@ -336,7 +337,7 @@
                                 <label>Promoção</label>
                                 <select id="ed-promo" class="form-input">
                                     <option value="false">Não</option>
-                                    <option value="true">Sim (Destaque Vermelho)</option>
+                                    <option value="true">Sim</option>
                                 </select>
                             </div>
                         </div>
@@ -412,6 +413,21 @@
                         <button class="btn-save-prod" onclick="window.saveEditingProduct()">Salvar Produto</button>
                     </div>
                 </div>
+            </div>
+        </section>
+
+        <section id="configuracoes" class="section">
+            <h2>Configurações da Loja</h2>
+            <div class="editor-card">
+                <div class="card-header-flex">
+                    <span class="card-title" style="font-size: 1.1rem;">⏳ Horário de Funcionamento</span>
+                </div>
+                <p style="font-size: 0.85rem; color: #777; margin-bottom: 20px;">Defina os dias e horários padrão em que a sua loja atende aos clientes.</p>
+                
+                <div id="schedule-container">
+                    </div>
+                
+                <button class="btn-save-prod" onclick="window.saveSchedule()" style="margin-top: 20px; width: 100%; padding: 15px; font-size: 1rem;">Salvar Horários</button>
             </div>
         </section>
 
@@ -610,6 +626,60 @@
         };
 
         // ==========================================
+        // LÓGICA DE HORÁRIOS DE FUNCIONAMENTO (NOVO)
+        // ==========================================
+        const daysOfWeek = [
+            { id: 'seg', name: 'Segunda-feira' },
+            { id: 'ter', name: 'Terça-feira' },
+            { id: 'qua', name: 'Quarta-feira' },
+            { id: 'qui', name: 'Quinta-feira' },
+            { id: 'sex', name: 'Sexta-feira' },
+            { id: 'sab', name: 'Sábado' },
+            { id: 'dom', name: 'Domingo' }
+        ];
+
+        window.renderScheduleUI = (scheduleData = {}) => {
+            const container = document.getElementById('schedule-container');
+            let html = '';
+            daysOfWeek.forEach(day => {
+                const data = scheduleData[day.id] || { active: true, open: '08:00', close: '18:00' };
+                html += `
+                    <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #eee;">
+                        <label style="width: 130px; display: flex; align-items: center; gap: 8px; margin: 0; font-weight:bold; color:#333; cursor:pointer;">
+                            <input type="checkbox" id="sch-active-${day.id}" ${data.active ? 'checked' : ''} style="transform: scale(1.3); accent-color: #ea1d2c; cursor:pointer;"> 
+                            ${day.name}
+                        </label>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="time" id="sch-open-${day.id}" class="form-input" style="width: 110px;" value="${data.open}">
+                            <span style="color: #777; font-weight:bold;">até</span>
+                            <input type="time" id="sch-close-${day.id}" class="form-input" style="width: 110px;" value="${data.close}">
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        };
+
+        window.saveSchedule = async () => {
+            const newSchedule = {};
+            daysOfWeek.forEach(day => {
+                newSchedule[day.id] = {
+                    active: document.getElementById(`sch-active-${day.id}`).checked,
+                    open: document.getElementById(`sch-open-${day.id}`).value,
+                    close: document.getElementById(`sch-close-${day.id}`).value
+                };
+            });
+
+            try {
+                await updateDoc(doc(db, "stores", loggedStore.id), { schedule: newSchedule });
+                alert("Horários atualizados com sucesso!");
+            } catch(e) {
+                console.error(e);
+                alert("Ocorreu um erro ao salvar os horários.");
+            }
+        };
+
+        // ==========================================
         // 3. KANBAN DE PEDIDOS (TEMPO REAL FIREBASE)
         // ==========================================
         const qOrders = query(collection(db, "orders"), where("storeId", "==", loggedStore.id));
@@ -784,7 +854,7 @@
         };
 
         // ==========================================
-        // 5. GESTÃO DO CARDÁPIO E CATEGORIAS (FIREBASE)
+        // 5. GESTÃO DO CARDÁPIO E CATEGORIAS
         // ==========================================
         let currentEditingId = null; let editorImageBase64 = ''; let currentPriceType = 'simples'; let editingVariants = []; let editingModifiers = []; 
         let globalProducts = [];
@@ -794,6 +864,10 @@
             if (docSnap.exists()) {
                 const data = docSnap.data();
                 if (data.categories && Array.isArray(data.categories)) { myCategories = data.categories; }
+                
+                // Carrega as configurações de horário da loja para a tela (NOVO)
+                window.renderScheduleUI(data.schedule || {});
+
                 window.loadCategoriesAndProducts();
             }
         });
