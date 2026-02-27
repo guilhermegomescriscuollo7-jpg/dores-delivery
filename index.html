@@ -303,7 +303,6 @@
             const wrapper = document.getElementById('banner-wrapper');
             const banners = [];
             snapshot.forEach(doc => banners.push(doc.data()));
-
             if(banners.length > 0) {
                 wrapper.style.display = 'block';
                 track.innerHTML = banners.map(b => `<img src="${b.image}" class="banner-slide">`).join('');
@@ -316,9 +315,7 @@
                         track.scrollTo({ left: scrollAmount * currentIndex, behavior: 'smooth' });
                     }
                 }, 3500);
-            } else {
-                wrapper.style.display = 'none';
-            }
+            } else { wrapper.style.display = 'none'; }
         });
 
         onSnapshot(collection(db, "stores"), (snapshot) => {
@@ -327,6 +324,7 @@
             window.renderStores();
         });
 
+        // 🟢 CÁLCULO INTELIGENTE DE HORÁRIO NA RENDERIZAÇÃO DAS LOJAS 🟢
         window.renderStores = () => {
             const container = document.getElementById('store-list-container');
             let filteredStores = allStores.filter(s => s.isActive !== false);
@@ -335,8 +333,44 @@
                 filteredStores = filteredStores.filter(s => s.cat && s.cat.toLowerCase().includes(currentCategoryFilter.toLowerCase()));
             }
 
+            // Descobre o tempo atual do sistema
+            const now = new Date();
+            const daysMap = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab'];
+            const currentDayStr = daysMap[now.getDay()];
+            const currentMins = now.getHours() * 60 + now.getMinutes();
+
+            // Avalia o horário dinâmico de cada loja antes de mostrar
+            filteredStores = filteredStores.map(s => {
+                let dynamicStatus = s.status || 'Aberto';
+                
+                // Se estiver aberto, verifica o horário. (Se estiver fechado, continua fechado)
+                if (dynamicStatus === 'Aberto' && s.schedule) {
+                    const todaySch = s.schedule[currentDayStr];
+                    if (!todaySch || !todaySch.active) {
+                        dynamicStatus = 'Fechado'; // Dia inativo
+                    } else {
+                        const [oH, oM] = (todaySch.open || '00:00').split(':').map(Number);
+                        const [cH, cM] = (todaySch.close || '23:59').split(':').map(Number);
+                        const openMins = (oH || 0) * 60 + (oM || 0);
+                        const closeMins = (cH || 0) * 60 + (cM || 0);
+                        
+                        let isOpen = false;
+                        if (closeMins >= openMins) {
+                            isOpen = currentMins >= openMins && currentMins <= closeMins;
+                        } else {
+                            // Cobre turnos que passam da meia noite (Ex: 18:00 às 02:00)
+                            isOpen = currentMins >= openMins || currentMins <= closeMins;
+                        }
+                        
+                        if (!isOpen) dynamicStatus = 'Fechado'; // Passou do horário
+                    }
+                }
+                return { ...s, dynamicStatus };
+            });
+
+            // Ordena colocando as abertas primeiro
             filteredStores.sort((a, b) => {
-                const getWeight = (store) => { if (store.isActive === false) return 2; if (store.status === 'Fechado') return 1; return 0; };
+                const getWeight = (store) => { if (store.isActive === false) return 2; if (store.dynamicStatus === 'Fechado') return 1; return 0; };
                 return getWeight(a) - getWeight(b);
             });
 
@@ -344,14 +378,16 @@
 
             container.innerHTML = filteredStores.map(s => {
                 const isSuspended = s.isActive === false;
-                const isClosed = s.status === 'Fechado';
+                const isClosed = s.dynamicStatus === 'Fechado';
                 const cardClass = (isClosed || isSuspended) ? 'store-card closed' : 'store-card';
                 
-                let statusText = s.status || 'Aberto';
-                let statusColor = '#00a14b'; 
+                let statusText = s.dynamicStatus;
+                let statusColor = isClosed ? '#717171' : '#00a14b'; 
 
-                if (isSuspended) { statusText = 'Indisponível'; statusColor = '#ea1d2c'; } else if (isClosed) { statusText = 'Fechado'; statusColor = '#717171'; }
-                const onClickAction = isSuspended ? `alert('Esta loja está indisponível.');` : `window.openMenu('${s.id}', '${s.name}', '${s.logo}', '${s.cat}', '${s.status}')`;
+                if (isSuspended) { statusText = 'Indisponível'; statusColor = '#ea1d2c'; } 
+                
+                // Passa o status real dinâmico para a função de abrir o cardápio
+                const onClickAction = isSuspended ? `alert('Esta loja está indisponível.');` : `window.openMenu('${s.id}', '${s.name}', '${s.logo}', '${s.cat}', '${isClosed ? 'Fechado' : 'Aberto'}')`;
                 
                 return `
                 <div class="${cardClass}" onclick="${onClickAction}">
@@ -363,6 +399,11 @@
                 </div>`;
             }).join('');
         };
+
+        // Mantém a loja atualizando a cada 1 minuto (se der o horário ela fecha visualmente sozinha)
+        setInterval(() => {
+            if(allStores.length > 0) window.renderStores();
+        }, 60000);
 
         window.filterCategory = (categoryName, element) => {
             document.querySelectorAll('#category-filters .button-item').forEach(btn => btn.classList.remove('active'));
@@ -377,17 +418,13 @@
         window.openMenu = (storeId, storeName, storeLogo, storeCat, storeStatus) => {
             activeStore = { id: storeId, name: storeName, logo: storeLogo, status: storeStatus || 'Aberto' };
             const coverImage = storeLogo !== 'https://via.placeholder.com/60' ? storeLogo : 'https://via.placeholder.com/600x300';
-            
             document.getElementById('modal-content').innerHTML = `
                 <div class="store-cover" style="background-image: url('${coverImage}');"><div class="cover-btns"><button class="btn-circle" onclick="window.closeMenu()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></button></div></div>
                 <div style="padding: 40px; text-align: center; color: #777;">Carregando cardápio...</div>
             `;
             document.getElementById('menu-modal').classList.add('active');
-
-            const q = query(collection(db, "products"), where("storeId", "==", storeId));
-            onSnapshot(q, (snapshot) => {
-                currentStoreProducts = [];
-                snapshot.forEach(doc => currentStoreProducts.push({ id: doc.id, ...doc.data() }));
+            onSnapshot(query(collection(db, "products"), where("storeId", "==", storeId)), (snapshot) => {
+                currentStoreProducts = []; snapshot.forEach(doc => currentStoreProducts.push({ id: doc.id, ...doc.data() }));
                 window.renderMenuHtml(storeName, storeLogo, storeCat, storeStatus, coverImage);
             });
         };
@@ -411,7 +448,7 @@
                                     let displayPrice = p.price > 0 ? `R$ ${p.price.toFixed(2)}` : (p.variants && p.variants.length > 0 ? `A partir de R$ ${p.variants[0].price.toFixed(2)}` : 'R$ 0,00');
                                     let badgeTop = (cat === 'Destaques' && index === 0) ? '<div class="badge-top">Mais pedido</div>' : '';
                                     
-                                    // 🟢 NOVA ETIQUETA DE PROMOÇÃO (VERMELHA E MAIS BONITA) 🟢
+                                    // 🟢 NOVA ETIQUETA DE PROMOÇÃO NO CLIENTE 🟢
                                     let promoBadge = p.isPromo === true ? '<span style="background:#ea1d2c; color:#fff; font-size:0.65rem; font-weight:800; padding:4px 8px; border-radius:12px; margin-left:8px; display:inline-flex; align-items:center; letter-spacing:0.5px; text-transform:uppercase; box-shadow: 0 2px 4px rgba(234, 29, 44, 0.2);">Promoção</span>' : '';
                                     
                                     return `<div class="prod-card-list" onclick="window.openProductModal('${p.id}')"><div class="img-wrapper"><img src="${p.image || 'https://via.placeholder.com/150'}" alt="Foto Produto">${badgeTop}</div><div class="prod-info-list"><div class="name" style="display:flex; align-items:center; flex-wrap:wrap; gap:4px;">${p.name} ${promoBadge}</div><div class="desc">${p.desc || ''}</div><div class="price">${displayPrice}</div></div></div>`;
@@ -434,53 +471,19 @@
             window.updateCartBadge(); 
         };
 
-        window.filterStoreMenu = (categoryName, element) => {
-            document.querySelectorAll('.store-cat-btn').forEach(btn => btn.classList.remove('active'));
-            element.classList.add('active');
-            document.querySelectorAll('.store-category-group').forEach(group => {
-                if (categoryName === 'Todas' || group.dataset.category === categoryName) {
-                    group.style.display = 'block';
-                } else {
-                    group.style.display = 'none';
-                }
-            });
-        };
-
+        window.filterStoreMenu = (categoryName, element) => { document.querySelectorAll('.store-cat-btn').forEach(btn => btn.classList.remove('active')); element.classList.add('active'); document.querySelectorAll('.store-category-group').forEach(group => { if (categoryName === 'Todas' || group.dataset.category === categoryName) { group.style.display = 'block'; } else { group.style.display = 'none'; } }); };
         window.closeMenu = () => document.getElementById('menu-modal').classList.remove('active');
 
         window.openProductModal = (productId) => {
-            activeProduct = currentStoreProducts.find(p => p.id === productId);
-            if(!activeProduct) return;
-
-            prodQty = 1;
-            document.getElementById('p-modal-qty').innerText = prodQty;
-            document.getElementById('p-modal-obs').value = '';
-            window.updateObsCount();
-
-            document.getElementById('p-modal-img').src = activeProduct.image || 'https://via.placeholder.com/600x400';
-            document.getElementById('p-modal-name').innerText = activeProduct.name;
-            document.getElementById('p-modal-desc').innerText = activeProduct.desc || '';
-            
-            basePriceCalc = activeProduct.price > 0 ? activeProduct.price : 0;
-            document.getElementById('p-modal-price').innerText = `R$ ${basePriceCalc.toFixed(2)}`;
+            activeProduct = currentStoreProducts.find(p => p.id === productId); if(!activeProduct) return;
+            prodQty = 1; document.getElementById('p-modal-qty').innerText = prodQty; document.getElementById('p-modal-obs').value = ''; window.updateObsCount();
+            document.getElementById('p-modal-img').src = activeProduct.image || 'https://via.placeholder.com/600x400'; document.getElementById('p-modal-name').innerText = activeProduct.name; document.getElementById('p-modal-desc').innerText = activeProduct.desc || '';
+            basePriceCalc = activeProduct.price > 0 ? activeProduct.price : 0; document.getElementById('p-modal-price').innerText = `R$ ${basePriceCalc.toFixed(2)}`;
 
             const varContainer = document.getElementById('p-modal-variants');
             if (activeProduct.variants && activeProduct.variants.length > 0) {
                 if(basePriceCalc === 0) basePriceCalc = activeProduct.variants[0].price;
-                varContainer.innerHTML = `
-                    <div class="options-group">
-                        <h4>${activeProduct.variantTitle || 'Escolha a opção'}</h4>
-                        ${activeProduct.variants.map((v, index) => `
-                            <div class="option-item" onclick="document.getElementById('var-${index}').click()">
-                                <label>${v.name}</label>
-                                <div style="display:flex; align-items:center; gap:10px;">
-                                    <span class="option-price">+ R$ ${v.price.toFixed(2)}</span>
-                                    <input type="radio" name="prodVariant" id="var-${index}" value="${v.price}" ${index === 0 ? 'checked' : ''} onchange="window.calculateModalPrice()">
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
+                varContainer.innerHTML = `<div class="options-group"><h4>${activeProduct.variantTitle || 'Escolha a opção'}</h4>${activeProduct.variants.map((v, index) => `<div class="option-item" onclick="document.getElementById('var-${index}').click()"><label>${v.name}</label><div style="display:flex; align-items:center; gap:10px;"><span class="option-price">+ R$ ${v.price.toFixed(2)}</span><input type="radio" name="prodVariant" id="var-${index}" value="${v.price}" ${index === 0 ? 'checked' : ''} onchange="window.calculateModalPrice()"></div></div>`).join('')}</div>`;
             } else { varContainer.innerHTML = ''; }
 
             const addContainer = document.getElementById('p-modal-addons');
@@ -488,121 +491,45 @@
                 addContainer.innerHTML = activeProduct.modifiers.map((modCat, catIdx) => {
                     const reqBadge = modCat.isRequired ? `<span style="background:#ea1d2c; color:#fff; font-size:0.6rem; padding:2px 6px; border-radius:4px; margin-left:10px;">Obrigatório</span>` : '';
                     const typeInput = modCat.isMultiple ? 'checkbox' : 'radio';
-                    return `
-                    <div class="options-group">
-                        <h4 style="margin-bottom: 5px;">${modCat.name} ${reqBadge}</h4>
-                        <p style="font-size:0.75rem; color:#777; margin-bottom: 10px;">${modCat.isMultiple ? 'Escolha vários' : 'Escolha 1'}</p>
-                        ${modCat.options.map((opt, optIdx) => `
-                            <div class="option-item" onclick="document.getElementById('mod-${catIdx}-${optIdx}').click()">
-                                <label>${opt.name}</label>
-                                <div style="display:flex; align-items:center; gap:10px;">
-                                    <span class="option-price">${opt.price > 0 ? '+ R$ ' + parseFloat(opt.price).toFixed(2) : ''}</span>
-                                    <input type="${typeInput}" class="addon-check" name="modcat_${catIdx}" id="mod-${catIdx}-${optIdx}" value="${opt.price || 0}" data-name="${opt.name}" onchange="window.calculateModalPrice()">
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                    `;
+                    return `<div class="options-group"><h4 style="margin-bottom: 5px;">${modCat.name} ${reqBadge}</h4><p style="font-size:0.75rem; color:#777; margin-bottom: 10px;">${modCat.isMultiple ? 'Escolha vários' : 'Escolha 1'}</p>${modCat.options.map((opt, optIdx) => `<div class="option-item" onclick="document.getElementById('mod-${catIdx}-${optIdx}').click()"><label>${opt.name}</label><div style="display:flex; align-items:center; gap:10px;"><span class="option-price">${opt.price > 0 ? '+ R$ ' + parseFloat(opt.price).toFixed(2) : ''}</span><input type="${typeInput}" class="addon-check" name="modcat_${catIdx}" id="mod-${catIdx}-${optIdx}" value="${opt.price || 0}" data-name="${opt.name}" onchange="window.calculateModalPrice()"></div></div>`).join('')}</div>`;
                 }).join('');
             } else { addContainer.innerHTML = ''; }
-
-            window.calculateModalPrice();
-            document.getElementById('product-modal').classList.add('active');
+            window.calculateModalPrice(); document.getElementById('product-modal').classList.add('active');
         };
 
         window.closeProductModal = () => document.getElementById('product-modal').classList.remove('active');
-
-        window.changeQty = (amount) => {
-            prodQty += amount;
-            if (prodQty < 1) prodQty = 1;
-            document.getElementById('p-modal-qty').innerText = prodQty;
-            window.calculateModalPrice();
-        };
-
-        window.updateObsCount = () => {
-            const obs = document.getElementById('p-modal-obs').value;
-            document.getElementById('obs-count').innerText = `${obs.length}/140`;
-        };
+        window.changeQty = (amount) => { prodQty += amount; if (prodQty < 1) prodQty = 1; document.getElementById('p-modal-qty').innerText = prodQty; window.calculateModalPrice(); };
+        window.updateObsCount = () => { const obs = document.getElementById('p-modal-obs').value; document.getElementById('obs-count').innerText = `${obs.length}/140`; };
 
         window.calculateModalPrice = () => {
             let finalPrice = basePriceCalc;
-            const selectedVariant = document.querySelector('input[name="prodVariant"]:checked');
-            if (selectedVariant) finalPrice = parseFloat(selectedVariant.value);
-            const addons = document.querySelectorAll('.addon-check:checked');
-            addons.forEach(addon => { finalPrice += parseFloat(addon.value); });
-
-            const total = finalPrice * prodQty;
-            document.getElementById('p-modal-total-btn').innerText = `R$ ${total.toFixed(2)}`;
+            const selectedVariant = document.querySelector('input[name="prodVariant"]:checked'); if (selectedVariant) finalPrice = parseFloat(selectedVariant.value);
+            const addons = document.querySelectorAll('.addon-check:checked'); addons.forEach(addon => { finalPrice += parseFloat(addon.value); });
+            document.getElementById('p-modal-total-btn').innerText = `R$ ${(finalPrice * prodQty).toFixed(2)}`;
         };
 
         window.confirmAddToCart = () => {
-            if(activeStore.status === 'Fechado') {
-                alert("Esta loja está fechada no momento. Não é possível adicionar itens ao carrinho.");
-                return;
-            }
-
+            if(activeStore.status === 'Fechado') return alert("Esta loja está fechada no momento.");
             if (activeProduct.modifiers && activeProduct.modifiers.length > 0) {
                 for (let i = 0; i < activeProduct.modifiers.length; i++) {
                     const modCat = activeProduct.modifiers[i];
-                    if (modCat.isRequired) {
-                        const checked = document.querySelectorAll(`input[name="modcat_${i}"]:checked`);
-                        if (checked.length === 0) {
-                            alert(`Por favor, selecione uma opção em: ${modCat.name}`);
-                            return;
-                        }
-                    }
+                    if (modCat.isRequired && document.querySelectorAll(`input[name="modcat_${i}"]:checked`).length === 0) return alert(`Selecione uma opção em: ${modCat.name}`);
                 }
             }
-
-            let finalPrice = basePriceCalc;
-            let selectedVariantText = '';
-            
+            let finalPrice = basePriceCalc; let selectedVariantText = '';
             const selectedVariant = document.querySelector('input[name="prodVariant"]:checked');
-            if (selectedVariant) {
-                finalPrice = parseFloat(selectedVariant.value);
-                const label = selectedVariant.closest('.option-item').querySelector('label');
-                selectedVariantText = label.innerText.trim();
-            }
-
+            if (selectedVariant) { finalPrice = parseFloat(selectedVariant.value); selectedVariantText = selectedVariant.closest('.option-item').querySelector('label').innerText.trim(); }
             let selectedAddonsText = [];
-            const addons = document.querySelectorAll('.addon-check:checked');
-            addons.forEach(addon => {
-                finalPrice += parseFloat(addon.value);
-                selectedAddonsText.push(addon.dataset.name);
-            });
-
-            const observation = document.getElementById('p-modal-obs').value;
-
-            const cartItem = {
-                id: activeProduct.id + '-' + Date.now(),
-                name: activeProduct.name,
-                variant: selectedVariantText,
-                addons: selectedAddonsText,
-                observation: observation,
-                price: finalPrice * prodQty,
-                qty: prodQty,
-                store: activeStore.name,
-                storeId: activeStore.id
-            };
-
-            cart.push(cartItem);
-            localStorage.setItem('cart', JSON.stringify(cart));
-            window.updateCartBadge();
-            window.closeProductModal();
+            document.querySelectorAll('.addon-check:checked').forEach(addon => { finalPrice += parseFloat(addon.value); selectedAddonsText.push(addon.dataset.name); });
+            
+            cart.push({ id: activeProduct.id + '-' + Date.now(), name: activeProduct.name, variant: selectedVariantText, addons: selectedAddonsText, observation: document.getElementById('p-modal-obs').value, price: finalPrice * prodQty, qty: prodQty, store: activeStore.name, storeId: activeStore.id });
+            localStorage.setItem('cart', JSON.stringify(cart)); window.updateCartBadge(); window.closeProductModal();
         };
 
         window.updateCartBadge = () => {
-            const mainBadge = document.getElementById('cart-count');
-            const modalBadge = document.getElementById('modal-cart-count');
-            
-            if (mainBadge) {
-                mainBadge.style.display = cart.length > 0 ? 'block' : 'none';
-                mainBadge.innerText = cart.length;
-            }
-            if (modalBadge) {
-                modalBadge.style.display = cart.length > 0 ? 'block' : 'none';
-                modalBadge.innerText = cart.length;
-            }
+            const mainBadge = document.getElementById('cart-count'); const modalBadge = document.getElementById('modal-cart-count');
+            if (mainBadge) { mainBadge.style.display = cart.length > 0 ? 'block' : 'none'; mainBadge.innerText = cart.length; }
+            if (modalBadge) { modalBadge.style.display = cart.length > 0 ? 'block' : 'none'; modalBadge.innerText = cart.length; }
         };
     </script>
 </body>
