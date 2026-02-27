@@ -14,7 +14,7 @@
         .store-header { padding: 25px 20px; border-bottom: 1px solid #f2f2f2; text-align: center; }
         .store-logo { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #ea1d2c; margin-bottom: 10px; }
         .store-name { font-size: 1.2rem; font-weight: 700; color: #111; }
-        .store-status-toggle { margin-top: 10px; padding: 8px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; cursor: pointer; border: none; width: 100%; transition: 0.2s; }
+        .store-status-toggle { margin-top: 10px; padding: 10px; border-radius: 12px; font-size: 0.9rem; font-weight: bold; cursor: pointer; border: none; width: 100%; transition: 0.2s; line-height: 1.3; }
         .status-open { background: #e6f4ea; color: #00a14b; }
         .status-closed { background: #fef0f0; color: #ea1d2c; }
         
@@ -528,15 +528,49 @@
         document.getElementById('ui-store-name').innerText = loggedStore.name;
         document.getElementById('ui-store-logo').src = loggedStore.logo || 'https://via.placeholder.com/80';
         
+        // 🟢 CÁLCULO INTELIGENTE DO BOTÃO DE STATUS 🟢
         window.updateStatusBtn = () => {
             const btn = document.getElementById('btn-toggle-status');
+            
+            let isScheduleOpen = true;
+            if (loggedStore.schedule) {
+                const now = new Date();
+                const daysMap = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab'];
+                const todaySch = loggedStore.schedule[daysMap[now.getDay()]];
+                
+                if (!todaySch || !todaySch.active) {
+                    isScheduleOpen = false;
+                } else {
+                    const currentMins = now.getHours() * 60 + now.getMinutes();
+                    const [oH, oM] = (todaySch.open || '00:00').split(':').map(Number);
+                    const [cH, cM] = (todaySch.close || '23:59').split(':').map(Number);
+                    const openMins = (oH || 0) * 60 + (oM || 0);
+                    const closeMins = (cH || 0) * 60 + (cM || 0);
+                    
+                    if (closeMins >= openMins) {
+                        isScheduleOpen = currentMins >= openMins && currentMins <= closeMins;
+                    } else {
+                        isScheduleOpen = currentMins >= openMins || currentMins <= closeMins;
+                    }
+                }
+            }
+
             if(loggedStore.status === 'Aberto') {
-                btn.className = 'store-status-toggle status-open'; btn.innerText = '🟢 Loja Aberta';
+                if (isScheduleOpen) {
+                    btn.className = 'store-status-toggle status-open'; 
+                    btn.innerHTML = '🟢 Loja Aberta <br><span style="font-size:0.65rem;font-weight:normal;">(Funcionamento normal)</span>';
+                } else {
+                    btn.className = 'store-status-toggle status-closed'; 
+                    btn.innerHTML = '🔴 Loja Fechada <br><span style="font-size:0.65rem;font-weight:normal;">Fora do horário configurado</span>';
+                }
             } else {
-                btn.className = 'store-status-toggle status-closed'; btn.innerText = '🔴 Loja Fechada';
+                btn.className = 'store-status-toggle status-closed'; 
+                btn.innerHTML = '🔴 Loja Fechada <br><span style="font-size:0.65rem;font-weight:normal;">Fechada manualmente</span>';
             }
         };
-        window.updateStatusBtn();
+
+        // Mantém o botão de status atualizando a cada 1 minuto
+        setInterval(() => { if(loggedStore) window.updateStatusBtn(); }, 60000);
 
         window.toggleStoreStatus = async () => {
             const newStatus = loggedStore.status === 'Aberto' ? 'Fechado' : 'Aberto';
@@ -626,7 +660,7 @@
         };
 
         // ==========================================
-        // LÓGICA DE HORÁRIOS DE FUNCIONAMENTO (NOVO)
+        // LÓGICA DE HORÁRIOS DE FUNCIONAMENTO
         // ==========================================
         const daysOfWeek = [
             { id: 'seg', name: 'Segunda-feira' },
@@ -863,11 +897,16 @@
         onSnapshot(doc(db, "stores", loggedStore.id), (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
+                
+                // MANTÉM OS DADOS DA LOJA SINCRONIZADOS NA MEMÓRIA PARA A INTELIGÊNCIA FUNCIONAR
+                loggedStore.schedule = data.schedule || null;
+                loggedStore.status = data.status || 'Aberto';
+                localStorage.setItem('loggedStore', JSON.stringify(loggedStore));
+
                 if (data.categories && Array.isArray(data.categories)) { myCategories = data.categories; }
                 
-                // Carrega as configurações de horário da loja para a tela (NOVO)
                 window.renderScheduleUI(data.schedule || {});
-
+                window.updateStatusBtn(); // Atualiza se a loja abriu ou fechou baseada no horário
                 window.loadCategoriesAndProducts();
             }
         });
@@ -1021,8 +1060,7 @@
 
                         let inactiveStyle = p.isActive === false ? 'opacity: 0.5; background: #fafafa;' : '';
                         let inactiveBadge = p.isActive === false ? '<span style="background:#ea1d2c; color:#fff; font-size:0.6rem; padding:2px 6px; border-radius:4px; margin-left:5px;">Inativo</span>' : '';
-                        
-                        let promoBadge = p.isPromo === true ? '<span style="background:#ea1d2c; color:#fff; font-size:0.65rem; font-weight:800; padding:4px 8px; border-radius:12px; margin-left:8px; display:inline-flex; align-items:center; letter-spacing:0.5px; text-transform:uppercase; box-shadow: 0 2px 4px rgba(234, 29, 44, 0.2);">Promoção</span>' : '';
+                        let promoBadge = p.isPromo === true ? '<span style="background:#ea1d2c; color:#fff; font-size:0.65rem; font-weight:800; padding:2px 8px; border-radius:12px; margin-left:6px; letter-spacing:0.5px; text-transform:uppercase;">Promoção</span>' : '';
                         
                         blockHTML += `
                             <div class="product-row" id="row-prod-${p.id}" onclick="window.openEditorEdit('${p.id}')" style="${inactiveStyle}">
