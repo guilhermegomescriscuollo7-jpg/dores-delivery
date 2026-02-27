@@ -48,13 +48,13 @@
         .info-text strong { display: block; color: #111; font-size: 1rem; margin-bottom: 3px; }
         .info-text p { color: #555; font-size: 0.9rem; line-height: 1.4; margin-bottom: 0; }
 
-        /* BOTÃO DE GPS GIGANTE E CHAMATIVO (AGORA VERMELHO) */
+        /* BOTÃO DE GPS PRETO */
         .btn-gps { 
             display: flex; 
             justify-content: center; 
             align-items: center; 
             gap: 8px; 
-            background: #ea1d2c; 
+            background: #111; 
             color: #fff; 
             border: none; 
             padding: 14px 15px; 
@@ -65,13 +65,13 @@
             margin-top: 15px; 
             transition: 0.2s; 
             width: 100%; 
-            box-shadow: 0 4px 12px rgba(234, 29, 44, 0.3); 
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); 
             text-transform: uppercase; 
         }
         .btn-gps:active { 
             transform: scale(0.97); 
-            background: #c81824; 
-            box-shadow: 0 2px 6px rgba(234, 29, 44, 0.3); 
+            background: #000; 
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4); 
         }
 
         /* Estilos específicos para a caixa de endereço da loja */
@@ -308,7 +308,7 @@
                         storeDetailsHtml = `<div class="store-address-box"><p>Aguardando dados de endereço...</p></div>`;
                     }
 
-                    // 🟢 NOME DA CIDADE, REMOÇÃO DO (CASA) E BOTÃO DE GPS
+                    // NOME DA CIDADE E BOTÃO DE GPS PARA O CLIENTE
                     const customerCity = "Doresópolis"; 
                     
                     // Remove qualquer complemento entre parênteses para exibir e pesquisar no GPS
