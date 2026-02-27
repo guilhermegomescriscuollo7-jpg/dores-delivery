@@ -193,10 +193,10 @@
             }
             previousDeliveryCount = pendingDeliveriesCount;
 
-            // Filtra histórico de hoje
+            // Filtra histórico de hoje (Mostra Concluídos ou os que ele já Entregou e aguardam o cliente)
             const todayDate = new Date().toLocaleDateString('pt-BR');
             currentHistoryDeliveries = allOrders.filter(o => {
-                if ((o.status === "Concluído" || o.status === "Concluido") && o.driverName === loggedDriver.name) {
+                if ((o.status === "Concluído" || o.status === "Concluido" || o.status === "Entregue") && o.driverName === loggedDriver.name) {
                     try { return o.date.split(' ')[0] === todayDate; } catch(e) { return false; }
                 }
                 return false;
@@ -340,8 +340,9 @@
         window.confirmDelivery = async (orderId, customerName) => {
             if(confirm(`Tem certeza que já entregou o pedido ao cliente ${customerName}?`)) {
                 try {
+                    // 🟢 MUDA PARA "ENTREGUE" PARA ESPERAR O CLIENTE
                     await updateDoc(doc(db, "orders", orderId), { 
-                        status: "Concluído" 
+                        status: "Entregue" 
                     });
                 } catch(error) {
                     console.error("Erro ao atualizar:", error);
