@@ -48,9 +48,31 @@
         .info-text strong { display: block; color: #111; font-size: 1rem; margin-bottom: 3px; }
         .info-text p { color: #555; font-size: 0.9rem; line-height: 1.4; margin-bottom: 0; }
 
-        /* Estilos do Botão de GPS */
-        .btn-gps { display: inline-flex; align-items: center; gap: 6px; background: #eef4ff; color: #0d6efd; border: 1px solid #b6d4fe; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; text-decoration: none; margin-top: 10px; transition: 0.2s; }
-        .btn-gps:active { transform: scale(0.95); background: #dce7f9; }
+        /* NOVO BOTÃO DE GPS GIGANTE E CHAMATIVO */
+        .btn-gps { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            gap: 8px; 
+            background: #4285F4; /* Azul Google Maps */
+            color: #fff; 
+            border: none; 
+            padding: 14px 15px; 
+            border-radius: 8px; 
+            font-size: 1rem; 
+            font-weight: 900; 
+            text-decoration: none; 
+            margin-top: 15px; 
+            transition: 0.2s; 
+            width: 100%; 
+            box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3); 
+            text-transform: uppercase; 
+        }
+        .btn-gps:active { 
+            transform: scale(0.97); 
+            background: #3367d6; 
+            box-shadow: 0 2px 6px rgba(66, 133, 244, 0.3); 
+        }
 
         /* Estilos específicos para a caixa de endereço da loja */
         .store-address-box { background: #fafafa; border: 1px solid #eee; padding: 10px; border-radius: 8px; margin-top: 5px; }
@@ -275,7 +297,6 @@
                         const cep = storeInfo.cep ? `CEP: ${storeInfo.cep}` : '';
                         const doc = storeInfo.doc ? `CNPJ/CPF: ${storeInfo.doc}` : '';
                         
-                        // 🟢 EXIBE A CIDADE ANTES DA RUA DA LOJA
                         storeDetailsHtml = `
                             <div class="store-address-box">
                                 <p>📍 <strong>${cityInfo ? cityInfo + ' ➔ ' : ''}${street}</strong></p>
@@ -286,13 +307,13 @@
                         storeDetailsHtml = `<div class="store-address-box"><p>Aguardando dados de endereço...</p></div>`;
                     }
 
-                    // 🟢 NOME DA CIDADE E BOTÃO DE GPS PARA O CLIENTE
-                    const customerCity = "Doresópolis"; // Como é um app local, garantimos a cidade
+                    // NOME DA CIDADE E BOTÃO DE GPS PARA O CLIENTE
+                    const customerCity = "Doresópolis"; 
                     const displayCustomerAddress = `${customerCity} ➔ ${order.customer.address}`;
                     
                     // Link oficial do Google Maps com pesquisa direta
                     const addressForGPS = encodeURIComponent(`${customerCity}, MG, ${order.customer.address}`);
-                    const linkGPS = `https://www.google.com/maps/search/?api=1&query=${addressForGPS}`;
+                    const linkGPS = `http://maps.google.com/maps?q=${addressForGPS}`;
                     const btnGPSHtml = `<a href="${linkGPS}" target="_blank" class="btn-gps">🗺️ Traçar Rota no GPS</a>`;
                     
                     let btnHtml = '';
