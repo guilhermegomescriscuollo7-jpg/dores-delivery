@@ -10,41 +10,87 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', sans-serif; }
         body { background-color: #f8f8f8; color: #3e3e3e; padding-bottom: 110px; overflow-x: hidden; }
 
-        #install-banner { display: none; background: #111; color: #fff; padding: 12px 20px; justify-content: space-between; align-items: center; font-size: 0.9rem; }
+        /* =========================================================
+           BOTÃO DE INSTALAR APP (PWA)
+           ========================================================= */
+        #install-banner {
+            display: none;
+            background: #111;
+            color: #fff;
+            padding: 12px 20px;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
         .btn-install { background: #ea1d2c; color: white; border: none; padding: 8px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .btn-install:active { transform: scale(0.95); }
 
-        #splash-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s ease, visibility 0.5s ease; }
+        /* =========================================================
+           SPLASH SCREEN E PATROCINADOR
+           ========================================================= */
+        #splash-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #fff; z-index: 99999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
         #splash-screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        
         .splash-logo-container { display: flex; align-items: center; gap: 12px; animation: pulseSplash 1.5s ease-in-out infinite alternate; }
         @keyframes pulseSplash { 0% { transform: scale(0.95); } 100% { transform: scale(1.05); } }
         .splash-swoosh { width: 60px; height: auto; transform: rotate(-10deg); }
         .splash-text { font-size: 2.5rem; font-weight: 700; color: #ea1d2c; letter-spacing: -1.5px; margin: 0; }
 
-        #sponsor-wrapper { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 99998; display: none; align-items: center; justify-content: center; }
-        #sponsor-content { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+        /* Fundo branco que bloqueia a visão do app até os patrocínios acabarem */
+        #sponsor-wrapper {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #fff; z-index: 99998;
+            display: none; align-items: center; justify-content: center;
+        }
+
+        /* Container apenas para a imagem receber o efeito */
+        #sponsor-content {
+            width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+        }
         #sponsor-content img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Efeitos Dinâmicos do Patrocinador */
         .effect-fade { opacity: 0; transition: opacity 0.6s ease; }
         .effect-fade.active { opacity: 1; }
+
         .effect-zoom { opacity: 0; transform: scale(0.8); transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1); }
         .effect-zoom.active { opacity: 1; transform: scale(1); }
+
         .effect-slide { transform: translateY(100%); transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1); }
         .effect-slide.active { transform: translateY(0); }
 
+        /* =========================================================
+           CABEÇALHO
+           ========================================================= */
         .brand-header { background: #fff; padding: 20px 20px; position: relative; border-bottom: 1px solid #f2f2f2; display: flex; justify-content: space-between; align-items: center; }
         .brand-logo-container { display: flex; align-items: center; gap: 8px; flex-grow: 1; }
         .brand-swoosh { width: 35px; height: auto; transform: rotate(-10deg); }
         .brand-text { font-size: 1.6rem; font-weight: 700; color: #ea1d2c; letter-spacing: -1px; margin: 0; }
         
-        .header-cart-btn { position: relative; width: 45px; height: 45px; border-radius: 50%; background: #fff; color: #ea1d2c; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid #f2f2f2; flex-shrink: 0; }
+        .header-cart-btn {
+            position: relative; width: 45px; height: 45px; border-radius: 50%; background: #fff; color: #ea1d2c;
+            display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid #f2f2f2; flex-shrink: 0;
+        }
         .header-cart-btn:active { transform: scale(0.9); background: #fdfdfd; }
         .cart-badge { position: absolute; top: -5px; right: -5px; background: #ea1d2c; color: white; font-size: 0.75rem; padding: 2px 7px; border-radius: 50%; border: 2px solid #fff; font-weight: bold; display: none; }
 
+        /* =========================================================
+           CARROSSEL DE BANNERS ROTATIVOS
+           ========================================================= */
         .banner-carousel-wrapper { background: #f8f8f8; padding: 15px 15px 0; display: none; }
         .banner-track { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; border-radius: 12px; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
         .banner-track::-webkit-scrollbar { display: none; }
         .banner-slide { flex: 0 0 100%; height: 150px; border-radius: 12px; object-fit: cover; scroll-snap-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
 
+        /* =========================================================
+           CATEGORIAS
+           ========================================================= */
         .button-scroll-container { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 12px; padding: 15px; background: #f8f8f8; scrollbar-width: none; -webkit-overflow-scrolling: touch; width: 100%; }
         .button-scroll-container::-webkit-scrollbar { display: none; }
         .button-item { display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fff; padding: 12px 5px; border-radius: 16px; text-align: center; cursor: pointer; border: 2px solid transparent; transition: all 0.3s ease; flex: 0 0 auto; width: 85px; box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
@@ -56,6 +102,9 @@
         .button-item.active .filter-icon { color: #fff; } 
         .section-title { padding: 5px 15px 10px; font-size: 1.1rem; font-weight: 700; color: #333; }
 
+        /* =========================================================
+           LISTA DE LOJAS
+           ========================================================= */
         .store-list { padding: 0 15px; }
         .store-card { display: flex; align-items: center; padding: 15px; margin-bottom: 12px; border-radius: 12px; cursor: pointer; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.04); border: 1px solid #f2f2f2; transition: 0.2s; }
         .store-card:active { transform: scale(0.98); background-color: #f9f9f9; }
@@ -67,6 +116,9 @@
         .store-details { font-size: 0.8rem; color: #717171; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
         .store-details .dot { color: #ccc; font-size: 0.6rem; }
 
+        /* =========================================================
+           MODAIS E CARDÁPIO DA LOJA
+           ========================================================= */
         #menu-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f8f8f8; z-index: 10000; transform: translateY(100%); transition: transform 0.3s ease; overflow-y: auto; padding-bottom: 20px; display: block; }
         #menu-modal.active { transform: translateY(0); }
         .store-cover { height: 160px; background-color: #ea1d2c; background-size: cover; background-position: center; position: relative; }
@@ -97,6 +149,20 @@
         .prod-info-list .price { font-weight: 500; color: #333; font-size: 0.95rem; }
         .badge-top { position: absolute; top: 0; left: 0; background: #ea1d2c; color: #fff; font-size: 0.65rem; padding: 4px 8px; border-bottom-right-radius: 8px; font-weight: bold; z-index: 2; }
 
+        /* =========================================================
+           NOVO LAYOUT: GRID PARA DESTAQUES
+           ========================================================= */
+        .products-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 0 15px 15px 15px; background: #fff; }
+        .prod-card-grid { display: flex; flex-direction: column; border: 1px solid #f2f2f2; border-radius: 12px; overflow: hidden; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 6px rgba(0,0,0,0.03); background: #fff; }
+        .prod-card-grid:active { transform: scale(0.98); }
+        .prod-card-grid .img-wrapper { position: relative; width: 100%; height: 120px; background: #eee; }
+        .prod-card-grid .img-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+        .prod-card-grid .prod-info-list { padding: 12px; display: flex; flex-direction: column; flex-grow: 1; gap: 5px; }
+        .prod-card-grid .name { font-size: 0.9rem; color: #333; font-weight: 600; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 2px;}
+        .prod-card-grid .desc { font-size: 0.75rem; color: #717171; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 8px; }
+        .prod-card-grid .price { font-weight: 700; color: #ea1d2c; font-size: 0.95rem; margin-top: auto; }
+
+        /* MODAL DO PRODUTO */
         #product-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 10001; transform: translateY(100%); transition: transform 0.3s ease; overflow-y: auto; padding-bottom: 100px; display: block; }
         #product-modal.active { transform: translateY(0); }
         .prod-img-header { position: relative; width: 100%; height: 300px; background: #f2f2f2; }
@@ -157,7 +223,11 @@
         </div>
         
         <div class="header-cart-btn" onclick="window.location.href='carrinho.html'">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ea1d2c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ea1d2c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="9" cy="21" r="1"></circle>
+                <circle cx="20" cy="21" r="1"></circle>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+            </svg>
             <span class="cart-badge" id="cart-count">0</span>
         </div>
     </div>
@@ -170,7 +240,9 @@
         <button class="btn-install" id="btn-install-app">Instalar</button>
     </div>
 
-    <div class="banner-carousel-wrapper" id="banner-wrapper"><div class="banner-track" id="banner-track"></div></div>
+    <div class="banner-carousel-wrapper" id="banner-wrapper">
+        <div class="banner-track" id="banner-track"></div>
+    </div>
 
     <section class="button-scroll-container" id="category-filters">
         <div class="button-item active" onclick="window.filterCategory('Todos', this)"><svg viewBox="0 0 24 24" fill="currentColor" class="filter-icon"><path d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z"/></svg><span>Todos</span></div>
@@ -245,7 +317,11 @@
         installBtn.addEventListener('click', async () => { installBanner.style.display = 'none'; if (deferredPrompt) { deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt = null; } });
         if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Falhou:', err)); }); }
         
+        // ==========================================
+        // O CÉREBRO DOS PATROCINADORES EM SEQUÊNCIA
+        // ==========================================
         let allActiveSponsors = [];
+
         onSnapshot(collection(db, "sponsors"), (snapshot) => {
             allActiveSponsors = [];
             snapshot.forEach(doc => allActiveSponsors.push(doc.data()));
@@ -324,7 +400,6 @@
             window.renderStores();
         });
 
-        // 🟢 CÁLCULO INTELIGENTE DE HORÁRIO NA RENDERIZAÇÃO DAS LOJAS 🟢
         window.renderStores = () => {
             const container = document.getElementById('store-list-container');
             let filteredStores = allStores.filter(s => s.isActive !== false);
@@ -333,21 +408,18 @@
                 filteredStores = filteredStores.filter(s => s.cat && s.cat.toLowerCase().includes(currentCategoryFilter.toLowerCase()));
             }
 
-            // Descobre o tempo atual do sistema
             const now = new Date();
             const daysMap = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab'];
             const currentDayStr = daysMap[now.getDay()];
             const currentMins = now.getHours() * 60 + now.getMinutes();
 
-            // Avalia o horário dinâmico de cada loja antes de mostrar
             filteredStores = filteredStores.map(s => {
                 let dynamicStatus = s.status || 'Aberto';
                 
-                // Se estiver aberto, verifica o horário. (Se estiver fechado, continua fechado)
                 if (dynamicStatus === 'Aberto' && s.schedule) {
                     const todaySch = s.schedule[currentDayStr];
                     if (!todaySch || !todaySch.active) {
-                        dynamicStatus = 'Fechado'; // Dia inativo
+                        dynamicStatus = 'Fechado'; 
                     } else {
                         const [oH, oM] = (todaySch.open || '00:00').split(':').map(Number);
                         const [cH, cM] = (todaySch.close || '23:59').split(':').map(Number);
@@ -358,17 +430,14 @@
                         if (closeMins >= openMins) {
                             isOpen = currentMins >= openMins && currentMins <= closeMins;
                         } else {
-                            // Cobre turnos que passam da meia noite (Ex: 18:00 às 02:00)
                             isOpen = currentMins >= openMins || currentMins <= closeMins;
                         }
-                        
-                        if (!isOpen) dynamicStatus = 'Fechado'; // Passou do horário
+                        if (!isOpen) dynamicStatus = 'Fechado';
                     }
                 }
                 return { ...s, dynamicStatus };
             });
 
-            // Ordena colocando as abertas primeiro
             filteredStores.sort((a, b) => {
                 const getWeight = (store) => { if (store.isActive === false) return 2; if (store.dynamicStatus === 'Fechado') return 1; return 0; };
                 return getWeight(a) - getWeight(b);
@@ -385,8 +454,6 @@
                 let statusColor = isClosed ? '#717171' : '#00a14b'; 
 
                 if (isSuspended) { statusText = 'Indisponível'; statusColor = '#ea1d2c'; } 
-                
-                // Passa o status real dinâmico para a função de abrir o cardápio
                 const onClickAction = isSuspended ? `alert('Esta loja está indisponível.');` : `window.openMenu('${s.id}', '${s.name}', '${s.logo}', '${s.cat}', '${isClosed ? 'Fechado' : 'Aberto'}')`;
                 
                 return `
@@ -400,10 +467,7 @@
             }).join('');
         };
 
-        // Mantém a loja atualizando a cada 1 minuto (se der o horário ela fecha visualmente sozinha)
-        setInterval(() => {
-            if(allStores.length > 0) window.renderStores();
-        }, 60000);
+        setInterval(() => { if(allStores.length > 0) window.renderStores(); }, 60000);
 
         window.filterCategory = (categoryName, element) => {
             document.querySelectorAll('#category-filters .button-item').forEach(btn => btn.classList.remove('active'));
@@ -443,15 +507,49 @@
                 
                 let itemsHTML = categories.map(cat => {
                     const prods = availableProducts.filter(p => (p.category || 'Geral') === cat);
-                    return `<div class="store-category-group" data-category="${cat}"><h3 class="menu-section-title">${cat}</h3><div class="products-vertical">
+                    
+                    // 🟢 VERIFICA SE É A CATEGORIA "DESTAQUES" PARA RENDERIZAR EM GRELHA 🟢
+                    const isGrid = cat === 'Destaques';
+                    const containerClass = isGrid ? 'products-grid' : 'products-vertical';
+                    const cardClass = isGrid ? 'prod-card-grid' : 'prod-card-list';
+
+                    return `<div class="store-category-group" data-category="${cat}">
+                                <h3 class="menu-section-title">${cat}</h3>
+                                <div class="${containerClass}">
                                 ${prods.map((p, index) => {
                                     let displayPrice = p.price > 0 ? `R$ ${p.price.toFixed(2)}` : (p.variants && p.variants.length > 0 ? `A partir de R$ ${p.variants[0].price.toFixed(2)}` : 'R$ 0,00');
                                     let badgeTop = (cat === 'Destaques' && index === 0) ? '<div class="badge-top">Mais pedido</div>' : '';
                                     
-                                    // 🟢 NOVA ETIQUETA DE PROMOÇÃO NO CLIENTE 🟢
-                                    let promoBadge = p.isPromo === true ? '<span style="background:#ea1d2c; color:#fff; font-size:0.65rem; font-weight:800; padding:4px 8px; border-radius:12px; margin-left:8px; display:inline-flex; align-items:center; letter-spacing:0.5px; text-transform:uppercase; box-shadow: 0 2px 4px rgba(234, 29, 44, 0.2);">Promoção</span>' : '';
-                                    
-                                    return `<div class="prod-card-list" onclick="window.openProductModal('${p.id}')"><div class="img-wrapper"><img src="${p.image || 'https://via.placeholder.com/150'}" alt="Foto Produto">${badgeTop}</div><div class="prod-info-list"><div class="name" style="display:flex; align-items:center; flex-wrap:wrap; gap:4px;">${p.name} ${promoBadge}</div><div class="desc">${p.desc || ''}</div><div class="price">${displayPrice}</div></div></div>`;
+                                    if(isGrid) {
+                                        // LAYOUT EM GRELHA (Lado a lado)
+                                        let promoBadgeGrid = p.isPromo === true ? '<div style="position:absolute; top:5px; right:5px; background:#ea1d2c; color:#fff; font-size:0.6rem; font-weight:bold; padding:2px 6px; border-radius:12px; z-index:2; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">Promoção</div>' : '';
+                                        return `<div class="${cardClass}" onclick="window.openProductModal('${p.id}')">
+                                                    <div class="img-wrapper">
+                                                        <img src="${p.image || 'https://via.placeholder.com/150'}" alt="Foto Produto">
+                                                        ${badgeTop}
+                                                        ${promoBadgeGrid}
+                                                    </div>
+                                                    <div class="prod-info-list">
+                                                        <div class="name">${p.name}</div>
+                                                        <div class="desc">${p.desc || ''}</div>
+                                                        <div class="price">${displayPrice}</div>
+                                                    </div>
+                                                </div>`;
+                                    } else {
+                                        // LAYOUT LISTA NORMAL (Um por baixo do outro)
+                                        let promoBadgeList = p.isPromo === true ? '<span style="background:#ea1d2c; color:#fff; font-size:0.65rem; font-weight:800; padding:4px 8px; border-radius:12px; margin-left:8px; display:inline-flex; align-items:center; letter-spacing:0.5px; text-transform:uppercase; box-shadow: 0 2px 4px rgba(234, 29, 44, 0.2);">Promoção</span>' : '';
+                                        return `<div class="${cardClass}" onclick="window.openProductModal('${p.id}')">
+                                                    <div class="img-wrapper">
+                                                        <img src="${p.image || 'https://via.placeholder.com/150'}" alt="Foto Produto">
+                                                        ${badgeTop}
+                                                    </div>
+                                                    <div class="prod-info-list">
+                                                        <div class="name" style="display:flex; align-items:center; flex-wrap:wrap; gap:4px;">${p.name} ${promoBadgeList}</div>
+                                                        <div class="desc">${p.desc || ''}</div>
+                                                        <div class="price">${displayPrice}</div>
+                                                    </div>
+                                                </div>`;
+                                    }
                                 }).join('')}
                             </div></div>`;
                 }).join('');
