@@ -569,7 +569,6 @@
             }
         };
 
-        // Mantém o botão de status atualizando a cada 1 minuto
         setInterval(() => { if(loggedStore) window.updateStatusBtn(); }, 60000);
 
         window.toggleStoreStatus = async () => {
@@ -740,7 +739,8 @@
                 else if(order.status === 'Em Preparo' || order.status === 'Aguardando Entregador') { 
                     colPreparo.innerHTML += cardHTML; cPrep++; 
                 } 
-                else if(order.status === 'Saiu para Entrega' || order.status === 'Concluído') { 
+                // 🟢 AGORA O ENTREGUE TAMBÉM VAI PARA A COLUNA DE CONCLUÍDOS DO LOJISTA
+                else if(order.status === 'Saiu para Entrega' || order.status === 'Entregue' || order.status === 'Concluído') { 
                     colConcluido.innerHTML += cardHTML; cConc++; 
                 }
             });
@@ -775,22 +775,27 @@
                     <button class="btn-action btn-call-driver" onclick="window.updateOrderStatus('${order.id}', 'Aguardando Entregador')">🛎️ Chamar Entregador</button>
                     <div style="display:flex; gap:5px;">
                         <button class="btn-action" style="flex:1; background:#f59e0b; font-size:0.8rem; padding:10px 5px;" onclick="window.updateOrderStatus('${order.id}', 'Saiu para Entrega')">🛵 Próprio (Saiu)</button>
-                        <button class="btn-action btn-dispatch" style="flex:1; font-size:0.8rem; padding:10px 5px;" onclick="window.updateOrderStatus('${order.id}', 'Concluído')">✅ Entregue</button>
+                        <button class="btn-action btn-dispatch" style="flex:1; font-size:0.8rem; padding:10px 5px;" onclick="window.updateOrderStatus('${order.id}', 'Entregue')">✅ Entregue</button>
                     </div>
                 </div>`; 
             }
             else if (order.status === 'Aguardando Entregador') {
                 actionBtn = `
                 <div style="text-align:center; margin-bottom: 8px; font-size: 0.9rem; color: #8e44ad; font-weight: bold;">⏳ Aguardando entregador aceitar...</div>
-                <button class="btn-action btn-dispatch" onclick="window.updateOrderStatus('${order.id}', 'Concluído')">✅ Forçar Conclusão</button>`;
+                <button class="btn-action btn-dispatch" style="background:#ccc; color:#333;" onclick="window.updateOrderStatus('${order.id}', 'Concluído')">Forçar Conclusão</button>`;
             }
             else if (order.status === 'Saiu para Entrega') {
                 actionBtn = `
                 <div style="text-align:center; margin-bottom: 8px; font-size: 0.9rem; color: #f59e0b; font-weight: bold;">🛵 Em rota de entrega</div>
-                <button class="btn-action btn-dispatch" onclick="window.updateOrderStatus('${order.id}', 'Concluído')">✅ Marcar como Entregue</button>`;
+                <button class="btn-action btn-dispatch" onclick="window.updateOrderStatus('${order.id}', 'Entregue')">✅ Marcar como Entregue</button>`;
+            }
+            else if (order.status === 'Entregue') {
+                actionBtn = `
+                <div style="text-align:center; margin-bottom: 8px; font-size: 0.9rem; color: #0d6efd; font-weight: bold;">⏳ Aguardando cliente confirmar...</div>
+                <button class="btn-action btn-dispatch" style="background:#eee; color:#555; border: 1px solid #ccc;" onclick="window.updateOrderStatus('${order.id}', 'Concluído')">Forçar Conclusão (Cliente Esqueceu)</button>`;
             }
             else if (order.status === 'Concluído') {
-                actionBtn = `<div style="text-align:center; color:#00a14b; font-weight:bold; font-size:0.9rem;">Finalizado</div>`;
+                actionBtn = `<div style="text-align:center; color:#00a14b; font-weight:bold; font-size:0.9rem;">✅ Finalizado e Confirmado</div>`;
             }
             
             const shortId = order.id.substring(0, 6).toUpperCase();
@@ -897,8 +902,6 @@
         onSnapshot(doc(db, "stores", loggedStore.id), (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                
-                // MANTÉM OS DADOS DA LOJA SINCRONIZADOS NA MEMÓRIA PARA A INTELIGÊNCIA FUNCIONAR
                 loggedStore.schedule = data.schedule || null;
                 loggedStore.status = data.status || 'Aberto';
                 localStorage.setItem('loggedStore', JSON.stringify(loggedStore));
@@ -906,7 +909,7 @@
                 if (data.categories && Array.isArray(data.categories)) { myCategories = data.categories; }
                 
                 window.renderScheduleUI(data.schedule || {});
-                window.updateStatusBtn(); // Atualiza se a loja abriu ou fechou baseada no horário
+                window.updateStatusBtn();
                 window.loadCategoriesAndProducts();
             }
         });
@@ -931,7 +934,6 @@
             }
         });
 
-        // MÓDULO DE CÁLCULO DE KG
         window.toggleWeightFields = () => {
             const unit = document.getElementById('ed-unit').value;
             const kgFields = document.getElementById('kg-fields');
