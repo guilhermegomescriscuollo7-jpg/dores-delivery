@@ -271,14 +271,14 @@
                     
                     if(storeInfo) {
                         const street = storeInfo.street || 'Endereço não informado';
-                        const city = storeInfo.city ? `🏙️ ${storeInfo.city} - ${storeInfo.state || ''}` : '';
+                        const cityInfo = storeInfo.city ? `${storeInfo.city}${storeInfo.state ? ' - ' + storeInfo.state : ''}` : '';
                         const cep = storeInfo.cep ? `CEP: ${storeInfo.cep}` : '';
                         const doc = storeInfo.doc ? `CNPJ/CPF: ${storeInfo.doc}` : '';
                         
+                        // 🟢 EXIBE A CIDADE ANTES DA RUA DA LOJA
                         storeDetailsHtml = `
                             <div class="store-address-box">
-                                <p>📍 <strong>${street}</strong></p>
-                                ${city ? `<p>${city}</p>` : ''}
+                                <p>📍 <strong>${cityInfo ? cityInfo + ' ➔ ' : ''}${street}</strong></p>
                                 <span class="store-doc">${cep} ${cep && doc ? '|' : ''} ${doc}</span>
                             </div>
                         `;
@@ -286,8 +286,12 @@
                         storeDetailsHtml = `<div class="store-address-box"><p>Aguardando dados de endereço...</p></div>`;
                     }
 
-                    // 🟢 BOTÃO DE GPS CODIFICADO PARA O GOOGLE MAPS 🟢
-                    const addressForGPS = encodeURIComponent(order.customer.address);
+                    // 🟢 NOME DA CIDADE E BOTÃO DE GPS PARA O CLIENTE
+                    const customerCity = "Doresópolis"; // Como é um app local, garantimos a cidade
+                    const displayCustomerAddress = `${customerCity} ➔ ${order.customer.address}`;
+                    
+                    // Link oficial do Google Maps com pesquisa direta
+                    const addressForGPS = encodeURIComponent(`${customerCity}, MG, ${order.customer.address}`);
                     const linkGPS = `https://www.google.com/maps/search/?api=1&query=${addressForGPS}`;
                     const btnGPSHtml = `<a href="${linkGPS}" target="_blank" class="btn-gps">🗺️ Traçar Rota no GPS</a>`;
                     
@@ -310,7 +314,7 @@
                             
                             <div class="info-row">
                                 <div class="info-icon">🏪</div>
-                                <div class="info-text">
+                                <div class="info-text" style="width: 100%;">
                                     <strong style="color: #ea1d2c;">Retirar em: ${order.storeName}</strong>
                                     ${storeDetailsHtml}
                                 </div>
@@ -320,7 +324,7 @@
                                 <div class="info-icon">📍</div>
                                 <div class="info-text">
                                     <strong style="color: #0d6efd;">Entregar para: ${order.customerName}</strong>
-                                    <p style="font-size: 0.95rem; font-weight: 500; color: #333;">${order.customer.address}</p>
+                                    <p style="font-size: 0.95rem; font-weight: 500; color: #333;">${displayCustomerAddress}</p>
                                     ${btnGPSHtml}
                                 </div>
                             </div>
