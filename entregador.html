@@ -311,14 +311,14 @@
                     // NOME DA CIDADE E BOTÃO DE GPS PARA O CLIENTE
                     const customerCity = "Doresópolis"; 
                     
-                    // Remove qualquer complemento entre parênteses para exibir e pesquisar no GPS
+                    // Remove qualquer complemento entre parênteses para exibir e pesquisar no GPS limpo
                     const cleanAddress = order.customer.address.replace(/\s*\([^)]*\)/g, '').trim();
                     const displayCustomerAddress = `${customerCity} ➔ ${cleanAddress}`;
                     
-                    // 🟢 LINK OFICIAL DO GOOGLE MAPS PARA ROTAS 🟢
+                    // 🟢 LINK OFICIAL DO GOOGLE MAPS PARA ROTAS (DIRECTIONS) 🟢
                     const addressForGPS = encodeURIComponent(`${customerCity}, MG, ${cleanAddress}`);
                     const linkGPS = `https://www.google.com/maps/dir/?api=1&destination=${addressForGPS}`;
-                    const btnGPSHtml = `<a href="${linkGPS}" target="_blank" class="btn-gps">🗺️ Traçar Rota no GPS</a>`;
+                    const btnGPSHtml = `<a href="${linkGPS}" target="_blank" class="btn-gps">🗺️ GPS</a>`;
                     
                     let btnHtml = '';
                     if (order.status === 'Aguardando Entregador') {
