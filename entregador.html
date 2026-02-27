@@ -44,8 +44,13 @@
 
         .info-row { margin-bottom: 15px; display: flex; gap: 10px; align-items: flex-start; }
         .info-icon { font-size: 1.2rem; margin-top: 2px; }
+        .info-text { width: 100%; }
         .info-text strong { display: block; color: #111; font-size: 1rem; margin-bottom: 3px; }
-        .info-text p { color: #555; font-size: 0.9rem; line-height: 1.4; }
+        .info-text p { color: #555; font-size: 0.9rem; line-height: 1.4; margin-bottom: 0; }
+
+        /* Estilos do Botão de GPS */
+        .btn-gps { display: inline-flex; align-items: center; gap: 6px; background: #eef4ff; color: #0d6efd; border: 1px solid #b6d4fe; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; text-decoration: none; margin-top: 10px; transition: 0.2s; }
+        .btn-gps:active { transform: scale(0.95); background: #dce7f9; }
 
         /* Estilos específicos para a caixa de endereço da loja */
         .store-address-box { background: #fafafa; border: 1px solid #eee; padding: 10px; border-radius: 8px; margin-top: 5px; }
@@ -216,8 +221,7 @@
             }
             previousDeliveryCount = pendingDeliveriesCount;
 
-            // 🟢 MATEMÁTICA DE DATA (À PROVA DE FALHAS) PARA O HISTÓRICO 🟢
-            // Calcula os milissegundos do início do dia de hoje
+            // MATEMÁTICA DE DATA (À PROVA DE FALHAS) PARA O HISTÓRICO
             const now = new Date();
             const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
 
@@ -238,9 +242,8 @@
         // ==========================================
         function renderDeliveries(active, history) {
             
-            // 🟢 ATUALIZA O VALOR DOS GANHOS DIÁRIOS
+            // ATUALIZA O VALOR DOS GANHOS DIÁRIOS
             const todayEarnings = history.reduce((acc, order) => {
-                // Se a loja tiver configurado, pega o valor, se não, é 5.00
                 const fee = (order.platformDriverFee !== undefined && order.platformDriverFee !== null) ? parseFloat(order.platformDriverFee) : 5.00;
                 return acc + fee;
             }, 0);
@@ -282,6 +285,11 @@
                     } else {
                         storeDetailsHtml = `<div class="store-address-box"><p>Aguardando dados de endereço...</p></div>`;
                     }
+
+                    // 🟢 BOTÃO DE GPS CODIFICADO PARA O GOOGLE MAPS 🟢
+                    const addressForGPS = encodeURIComponent(order.customer.address);
+                    const linkGPS = `https://www.google.com/maps/search/?api=1&query=${addressForGPS}`;
+                    const btnGPSHtml = `<a href="${linkGPS}" target="_blank" class="btn-gps">🗺️ Traçar Rota no GPS</a>`;
                     
                     let btnHtml = '';
                     if (order.status === 'Aguardando Entregador') {
@@ -302,7 +310,7 @@
                             
                             <div class="info-row">
                                 <div class="info-icon">🏪</div>
-                                <div class="info-text" style="width: 100%;">
+                                <div class="info-text">
                                     <strong style="color: #ea1d2c;">Retirar em: ${order.storeName}</strong>
                                     ${storeDetailsHtml}
                                 </div>
@@ -313,6 +321,7 @@
                                 <div class="info-text">
                                     <strong style="color: #0d6efd;">Entregar para: ${order.customerName}</strong>
                                     <p style="font-size: 0.95rem; font-weight: 500; color: #333;">${order.customer.address}</p>
+                                    ${btnGPSHtml}
                                 </div>
                             </div>
 
@@ -384,7 +393,7 @@
         window.confirmDelivery = async (orderId, customerName) => {
             if(confirm(`Tem certeza que já entregou o pedido ao cliente ${customerName}?`)) {
                 try {
-                    // MUDA PARA "ENTREGUE" PARA ESPERAR O CLIENTE 
+                    // MUDA PARA "ENTREGUE" PARA ESPERAR O CLIENTE CONFIRMAR
                     await updateDoc(doc(db, "orders", orderId), { 
                         status: "Entregue" 
                     });
