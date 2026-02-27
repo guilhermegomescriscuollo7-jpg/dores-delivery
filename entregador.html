@@ -211,13 +211,18 @@
             }
             previousDeliveryCount = pendingDeliveriesCount;
 
-            // Filtra histórico de hoje
-            const todayDate = new Date().toLocaleDateString('pt-BR');
+            // 🟢 MATEMÁTICA DE DATA (À PROVA DE FALHAS) PARA O HISTÓRICO 🟢
+            // Calcula os milissegundos do início do dia de hoje
+            const now = new Date();
+            const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
             currentHistoryDeliveries = allOrders.filter(o => {
-                if ((o.status === "Concluído" || o.status === "Concluido" || o.status === "Entregue") && o.driverName === loggedDriver.name) {
-                    try { return o.date.split(' ')[0] === todayDate; } catch(e) { return false; }
-                }
-                return false;
+                // Verifica se foi concluído/entregue, se é do motoboy atual e se o timestamp é de hoje
+                const isCompletedStatus = (o.status === "Concluído" || o.status === "Concluido" || o.status === "Entregue");
+                const isMyDelivery = (o.driverName === loggedDriver.name);
+                const isFromToday = (o.timestamp >= startOfToday);
+
+                return isCompletedStatus && isMyDelivery && isFromToday;
             });
 
             renderDeliveries(currentActiveDeliveries, currentHistoryDeliveries);
@@ -228,10 +233,10 @@
         // ==========================================
         function renderDeliveries(active, history) {
             
-            // 🟢 ATUALIZA O VALOR DOS GANHOS (R$ 5 por entrega concluída)
+            // 🟢 ATUALIZA O VALOR DOS GANHOS DIÁRIOS
             const todayEarnings = history.reduce((acc, order) => {
-                // Se a loja não mandou valor específico, assume que a taxa padrão é 5.00
-                const fee = order.platformDriverFee ? parseFloat(order.platformDriverFee) : 5.00;
+                // Se a loja tiver configurado, pega o valor, se não, é 5.00
+                const fee = (order.platformDriverFee !== undefined && order.platformDriverFee !== null) ? parseFloat(order.platformDriverFee) : 5.00;
                 return acc + fee;
             }, 0);
             document.getElementById('today-earnings').innerText = `R$ ${todayEarnings.toFixed(2).replace('.', ',')}`;
@@ -250,7 +255,7 @@
                     const itemsHtml = order.items.map(i => `<li><b>${i.qty}x</b> ${i.name}</li>`).join('');
                     
                     // Taxa de entrega desta corrida
-                    const driverFee = order.platformDriverFee ? parseFloat(order.platformDriverFee).toFixed(2) : "5.00";
+                    const driverFee = (order.platformDriverFee !== undefined && order.platformDriverFee !== null) ? parseFloat(order.platformDriverFee).toFixed(2) : "5.00";
 
                     // BUSCA INFORMAÇÃO COMPLETA DA LOJA
                     const storeInfo = globalStores.find(s => s.id === order.storeId);
@@ -337,7 +342,7 @@
                 countHistory.innerText = history.length;
                 containerHistory.innerHTML = history.sort((a,b) => b.timestamp - a.timestamp).map(order => {
                     const shortId = order.id.substring(0, 6).toUpperCase();
-                    const driverFee = order.platformDriverFee ? parseFloat(order.platformDriverFee).toFixed(2) : "5.00";
+                    const driverFee = (order.platformDriverFee !== undefined && order.platformDriverFee !== null) ? parseFloat(order.platformDriverFee).toFixed(2) : "5.00";
                     
                     return `
                     <div class="history-card">
@@ -374,7 +379,7 @@
         window.confirmDelivery = async (orderId, customerName) => {
             if(confirm(`Tem certeza que já entregou o pedido ao cliente ${customerName}?`)) {
                 try {
-                    // 🟢 MUDA PARA "ENTREGUE" PARA ESPERAR O CLIENTE 🟢
+                    // MUDA PARA "ENTREGUE" PARA ESPERAR O CLIENTE 
                     await updateDoc(doc(db, "orders", orderId), { 
                         status: "Entregue" 
                     });
