@@ -48,30 +48,28 @@
         .info-text strong { display: block; color: #111; font-size: 1rem; margin-bottom: 3px; }
         .info-text p { color: #555; font-size: 0.9rem; line-height: 1.4; margin-bottom: 0; }
 
-        /* BOTÃO DE GPS PRETO */
+        /* BOTÃO DE GPS COMPACTO */
         .btn-gps { 
-            display: flex; 
-            justify-content: center; 
+            display: inline-flex; 
             align-items: center; 
-            gap: 8px; 
+            gap: 6px; 
             background: #111; 
             color: #fff; 
             border: none; 
-            padding: 14px 15px; 
-            border-radius: 8px; 
-            font-size: 1rem; 
-            font-weight: 900; 
+            padding: 8px 16px; 
+            border-radius: 6px; 
+            font-size: 0.85rem; 
+            font-weight: 700; 
             text-decoration: none; 
-            margin-top: 15px; 
+            margin-top: 8px; 
             transition: 0.2s; 
-            width: 100%; 
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); 
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2); 
             text-transform: uppercase; 
         }
         .btn-gps:active { 
-            transform: scale(0.97); 
+            transform: scale(0.95); 
             background: #000; 
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4); 
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); 
         }
 
         /* Estilos específicos para a caixa de endereço da loja */
@@ -248,7 +246,6 @@
             const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
 
             currentHistoryDeliveries = allOrders.filter(o => {
-                // Verifica se foi concluído/entregue, se é do motoboy atual e se o timestamp é de hoje
                 const isCompletedStatus = (o.status === "Concluído" || o.status === "Concluido" || o.status === "Entregue");
                 const isMyDelivery = (o.driverName === loggedDriver.name);
                 const isFromToday = (o.timestamp >= startOfToday);
@@ -315,7 +312,7 @@
                     const cleanAddress = order.customer.address.replace(/\s*\([^)]*\)/g, '').trim();
                     const displayCustomerAddress = `${customerCity} ➔ ${cleanAddress}`;
                     
-                    // 🟢 LINK OFICIAL DO GOOGLE MAPS PARA ROTAS (DIRECTIONS) 🟢
+                    // 🟢 LINK OFICIAL DO GOOGLE MAPS PARA ROTAS (DIRECTIONS API) 🟢
                     const addressForGPS = encodeURIComponent(`${customerCity}, MG, ${cleanAddress}`);
                     const linkGPS = `https://www.google.com/maps/dir/?api=1&destination=${addressForGPS}`;
                     const btnGPSHtml = `<a href="${linkGPS}" target="_blank" class="btn-gps">🗺️ GPS</a>`;
