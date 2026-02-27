@@ -336,7 +336,7 @@
                                 <label>Promoção</label>
                                 <select id="ed-promo" class="form-input">
                                     <option value="false">Não</option>
-                                    <option value="true">Sim</option>
+                                    <option value="true">Sim (Destaque Vermelho)</option>
                                 </select>
                             </div>
                         </div>
@@ -353,20 +353,31 @@
                             </div>
                             
                             <div id="panel-simples">
-                                <div style="display: flex; gap: 15px;">
+                                <div style="display: flex; gap: 15px; margin-bottom: 15px;">
                                     <div class="form-group" style="flex: 1;">
-                                        <label>Preço</label>
+                                        <label>Vendido por</label>
+                                        <select id="ed-unit" class="form-input" onchange="window.toggleWeightFields()">
+                                            <option value="un">Unidade</option>
+                                            <option value="kg">Quilo (Kg)</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="flex: 1;">
+                                        <label>Preço Final</label>
                                         <div class="price-input-wrapper" style="margin-bottom: 0;">
                                             <span>R$</span>
                                             <input type="number" id="ed-price" class="form-input" step="0.01" placeholder="0.00">
                                         </div>
                                     </div>
-                                    <div class="form-group" style="flex: 1;">
-                                        <label>Vendido por</label>
-                                        <select id="ed-unit" class="form-input">
-                                            <option value="un">Unidade</option>
-                                            <option value="kg">Quilo (Kg)</option>
-                                        </select>
+                                </div>
+
+                                <div id="kg-fields" style="display: none; gap: 15px; background: #fdf5e6; padding: 15px; border-radius: 8px; border: 1px solid #f9e1b5; margin-bottom: 15px;">
+                                    <div class="form-group" style="flex: 1; margin: 0;">
+                                        <label style="color: #997404;">Valor do Kg (R$)</label>
+                                        <input type="number" id="ed-price-kg" class="form-input" step="0.01" placeholder="Ex: 50.00" oninput="window.calcKgPrice()">
+                                    </div>
+                                    <div class="form-group" style="flex: 1; margin: 0;">
+                                        <label style="color: #997404;">Peso da Peça (Kg)</label>
+                                        <input type="number" id="ed-weight" class="form-input" step="0.001" placeholder="Ex: 0.500 para 500g" oninput="window.calcKgPrice()">
                                     </div>
                                 </div>
                             </div>
@@ -807,6 +818,34 @@
             }
         });
 
+        // MÓDULO DE CÁLCULO DE KG
+        window.toggleWeightFields = () => {
+            const unit = document.getElementById('ed-unit').value;
+            const kgFields = document.getElementById('kg-fields');
+            const priceInput = document.getElementById('ed-price');
+            
+            if(unit === 'kg') {
+                kgFields.style.display = 'flex';
+                priceInput.readOnly = true;
+                priceInput.style.backgroundColor = '#f4f5f7';
+                window.calcKgPrice();
+            } else {
+                kgFields.style.display = 'none';
+                priceInput.readOnly = false;
+                priceInput.style.backgroundColor = '#fff';
+            }
+        };
+
+        window.calcKgPrice = () => {
+            const priceKg = parseFloat(document.getElementById('ed-price-kg').value);
+            const weight = parseFloat(document.getElementById('ed-weight').value);
+            if(!isNaN(priceKg) && !isNaN(weight)) {
+                document.getElementById('ed-price').value = (priceKg * weight).toFixed(2);
+            } else {
+                document.getElementById('ed-price').value = '';
+            }
+        };
+
         window.setPriceType = (type) => {
             currentPriceType = type;
             if (type === 'simples') {
@@ -895,24 +934,26 @@
                     blockHTML += `<div style="padding: 15px; font-size:0.85rem; color:#999; text-align:center;">Nenhum produto nesta categoria.</div>`; 
                 } else {
                     prodsInCat.forEach(p => {
-                        // VERIFICA SE É KG OU UNIDADE
                         let subText = '';
                         if (p.variants && p.variants.length > 0) {
                             subText = `${p.variants.length} Variantes`;
                         } else {
-                            subText = p.unit === 'kg' ? `R$ ${(p.price || 0).toFixed(2)} /kg` : `R$ ${(p.price || 0).toFixed(2)}`;
+                            if(p.unit === 'kg' && p.weight) {
+                                subText = `R$ ${(p.price || 0).toFixed(2)} (${p.weight}kg)`;
+                            } else {
+                                subText = `R$ ${(p.price || 0).toFixed(2)}`;
+                            }
                         }
 
                         let inactiveStyle = p.isActive === false ? 'opacity: 0.5; background: #fafafa;' : '';
                         let inactiveBadge = p.isActive === false ? '<span style="background:#ea1d2c; color:#fff; font-size:0.6rem; padding:2px 6px; border-radius:4px; margin-left:5px;">Inativo</span>' : '';
                         
-                        // 🟢 ETIQUETA DE PROMOÇÃO NO PAINEL 🟢
-                        let promoBadge = p.isPromo === true ? '<span style="background:#ea1d2c; color:#fff; font-size:0.6rem; font-weight:bold; padding:2px 6px; border-radius:12px; margin-left:6px; letter-spacing:0.5px; text-transform:uppercase;">Promoção</span>' : '';
+                        let promoBadge = p.isPromo === true ? '<span style="background:#ea1d2c; color:#fff; font-size:0.65rem; font-weight:800; padding:4px 8px; border-radius:12px; margin-left:8px; display:inline-flex; align-items:center; letter-spacing:0.5px; text-transform:uppercase; box-shadow: 0 2px 4px rgba(234, 29, 44, 0.2);">Promoção</span>' : '';
                         
                         blockHTML += `
                             <div class="product-row" id="row-prod-${p.id}" onclick="window.openEditorEdit('${p.id}')" style="${inactiveStyle}">
                                 <div class="drag-handle">⋮⋮</div><img src="${p.image}" class="row-img">
-                                <div class="row-info"><div class="row-name">${p.name} ${inactiveBadge} ${promoBadge}</div><div class="row-sub">${subText}</div></div>
+                                <div class="row-info"><div class="row-name" style="display:flex; align-items:center; flex-wrap:wrap;">${p.name} ${inactiveBadge} ${promoBadge}</div><div class="row-sub">${subText}</div></div>
                             </div>`;
                     });
                 }
@@ -926,9 +967,17 @@
             document.getElementById('ed-img-file').value = ''; document.getElementById('ed-img-preview').src = '';
             document.getElementById('ed-img-preview').style.display = 'none'; document.getElementById('btn-delete').style.display = 'none';
             editorImageBase64 = ''; document.getElementById('ed-price').value = ''; document.getElementById('ed-var-title').value = '';
+            
             document.getElementById('ed-status').value = 'true';
             document.getElementById('ed-promo').value = 'false';
+            
             document.getElementById('ed-unit').value = 'un';
+            document.getElementById('ed-price-kg').value = '';
+            document.getElementById('ed-weight').value = '';
+            document.getElementById('kg-fields').style.display = 'none';
+            document.getElementById('ed-price').readOnly = false;
+            document.getElementById('ed-price').style.backgroundColor = '#fff';
+
             editingVariants = []; editingModifiers = []; window.updateModBadge(); window.setPriceType('simples'); 
             document.querySelectorAll('.product-row').forEach(row => row.classList.remove('selected'));
         };
@@ -948,7 +997,13 @@
                 
                 document.getElementById('ed-status').value = prod.isActive !== false ? 'true' : 'false';
                 document.getElementById('ed-promo').value = prod.isPromo === true ? 'true' : 'false';
+                
                 document.getElementById('ed-unit').value = prod.unit || 'un';
+                if(prod.unit === 'kg') {
+                    document.getElementById('ed-price-kg').value = prod.priceKg || '';
+                    document.getElementById('ed-weight').value = prod.weight || '';
+                }
+                window.toggleWeightFields();
 
                 editingModifiers = prod.modifiers ? JSON.parse(JSON.stringify(prod.modifiers)) : []; window.updateModBadge();
             }
@@ -959,11 +1014,19 @@
             const isActive = document.getElementById('ed-status').value === 'true';
             const isPromo = document.getElementById('ed-promo').value === 'true';
             const unit = document.getElementById('ed-unit').value;
-            let finalPrice = 0; let finalVariants = []; let varTitle = '';
             
+            let finalPrice = 0; let finalVariants = []; let varTitle = '';
+            let priceKg = null; let weight = null;
+
             if (!name) return alert("O Nome do produto é obrigatório!");
             if (currentPriceType === 'simples') {
                 finalPrice = parseFloat(document.getElementById('ed-price').value); if (isNaN(finalPrice)) return alert("Preço é obrigatório!");
+                
+                if(unit === 'kg') {
+                    priceKg = parseFloat(document.getElementById('ed-price-kg').value) || 0;
+                    weight = parseFloat(document.getElementById('ed-weight').value) || 0;
+                    if(priceKg <= 0 || weight <= 0) return alert("Para produtos por Kg, preencha o valor do Kg e o peso da peça!");
+                }
             } else {
                 finalVariants = editingVariants.filter(v => v.name.trim() !== '' && v.price !== '');
                 if (finalVariants.length === 0) return alert("Adicione pelo menos uma variante válida!");
@@ -972,9 +1035,11 @@
             
             const prodData = {
                 storeId: loggedStore.id, name, desc, price: finalPrice, category,
-                isActive, isPromo, unit,
+                isActive, isPromo, unit, priceKg, weight,
                 variants: finalVariants, variantTitle: varTitle, modifiers: editingModifiers
             };
+            
+            if(unit !== 'kg') { delete prodData.priceKg; delete prodData.weight; }
             if(editorImageBase64) prodData.image = editorImageBase64;
 
             try {
