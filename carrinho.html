@@ -88,8 +88,7 @@
             
             <div class="cart-list">
                 <div class="store-header">🏪 <span id="cart-store-name">Nome da Loja</span></div>
-                <div id="cart-items-container">
-                    </div>
+                <div id="cart-items-container"></div>
             </div>
 
             <div class="summary-card">
@@ -164,9 +163,9 @@
     </main>
 
     <script type="module">
-        // Importamos também o getDoc e o doc para buscar a taxa da loja na nuvem
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        // 🟢 ADICIONAMOS query, where e getDocs PARA BUSCAR O PERFIL DO USUÁRIO 🟢
+        import { getFirestore, collection, addDoc, doc, getDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         // SUA CONFIGURAÇÃO OFICIAL
         const firebaseConfig = {
@@ -183,15 +182,14 @@
 
         let cart = JSON.parse(localStorage.getItem('cart')) || [];
         let finalTotal = 0;
-        let deliveryFee = 0; // Variável global para guardar a taxa de entrega
+        let deliveryFee = 0; 
         
         // Verifica se o usuário tem sessão ativa
         const loggedCustomer = JSON.parse(localStorage.getItem('loggedCustomer'));
-        const isLogged = !!loggedCustomer || localStorage.getItem('isLogged') === 'true'; // Compatibilidade
+        const isLogged = !!loggedCustomer || localStorage.getItem('isLogged') === 'true'; 
         const userName = loggedCustomer ? loggedCustomer.name : (localStorage.getItem('userName') || 'Cliente');
         const userEmail = loggedCustomer ? loggedCustomer.email : (localStorage.getItem('userEmail') || '');
 
-        // Lógica de exibir/esconder input de troco
         window.toggleChange = () => {
             const method = document.querySelector('input[name="pay-method"]:checked').value;
             const changeBox = document.getElementById('change-container');
@@ -203,7 +201,6 @@
             }
         };
 
-        // Transformamos a função em async para poder buscar a taxa no Firebase
         window.loadCart = async () => {
             if (cart.length === 0) {
                 document.getElementById('empty-state').style.display = 'block';
@@ -214,7 +211,6 @@
             document.getElementById('empty-state').style.display = 'none';
             document.getElementById('cart-content').style.display = 'block';
 
-            // Pega o nome e o ID da loja baseada no primeiro item do carrinho
             document.getElementById('cart-store-name').innerText = cart[0].store;
             const storeId = cart[0].storeId;
 
@@ -244,7 +240,7 @@
 
             document.getElementById('subtotal-val').innerText = `R$ ${subtotal.toFixed(2)}`;
 
-            // 🟢 LÓGICA DA TAXA DE ENTREGA 🟢
+            // LÓGICA DA TAXA DE ENTREGA
             try {
                 const storeRef = doc(db, "stores", storeId);
                 const storeSnap = await getDoc(storeRef);
@@ -252,10 +248,9 @@
                 if (storeSnap.exists() && storeSnap.data().deliveryFee) {
                     deliveryFee = parseFloat(storeSnap.data().deliveryFee);
                 } else {
-                    deliveryFee = 0; // Se a loja não configurou, é 0 (Grátis)
+                    deliveryFee = 0; 
                 }
 
-                // Atualiza o texto na tela
                 const feeTextElement = document.getElementById('delivery-fee-val');
                 if (deliveryFee > 0) {
                     feeTextElement.innerText = `R$ ${deliveryFee.toFixed(2)}`;
@@ -272,13 +267,36 @@
                 deliveryFee = 0;
             }
 
-            // Calcula o total com a taxa inclusa
             finalTotal = subtotal + deliveryFee;
             document.getElementById('total-val').innerText = `R$ ${finalTotal.toFixed(2)}`;
 
             if (isLogged) {
                 document.getElementById('checkout-form').style.display = 'block';
                 document.getElementById('login-alert').style.display = 'none';
+
+                // 🟢 PUXAR ENDEREÇO DO PERFIL DO CLIENTE 🟢
+                try {
+                    if(userEmail) {
+                        const q = query(collection(db, "customers"), where("email", "==", userEmail));
+                        const querySnapshot = await getDocs(q);
+                        
+                        if (!querySnapshot.empty) {
+                            querySnapshot.forEach((doc) => {
+                                const userData = doc.data();
+                                // Se ele tem endereço salvo e os campos de texto estão vazios
+                                if(userData.address && !document.getElementById('end-rua').value) {
+                                    document.getElementById('end-rua').value = userData.address.rua || '';
+                                    document.getElementById('end-num').value = userData.address.num || '';
+                                    document.getElementById('end-bairro').value = userData.address.bairro || '';
+                                    document.getElementById('end-comp').value = userData.address.comp || '';
+                                }
+                            });
+                        }
+                    }
+                } catch(err) {
+                    console.error("Não foi possível puxar o endereço automático: ", err);
+                }
+
             } else {
                 document.getElementById('checkout-form').style.display = 'none';
                 document.getElementById('login-alert').style.display = 'block';
@@ -320,7 +338,6 @@
             btn.innerText = "Enviando Pedido...";
             btn.disabled = true;
 
-            // MONTA O PEDIDO
             const newOrder = {
                 date: new Date().toLocaleString('pt-BR'),
                 timestamp: Date.now(), 
@@ -333,22 +350,16 @@
                     address: addressString
                 },
                 items: cart,
-                deliveryFee: deliveryFee, // Guarda na nuvem a taxa cobrada
+                deliveryFee: deliveryFee,
                 total: finalTotal,
                 paymentMethod: paymentString,
                 status: 'Pendente' 
             };
 
             try {
-                // SALVA O PEDIDO OFICIALMENTE NAS NUVENS
                 await addDoc(collection(db, "orders"), newOrder);
-
-                // Limpa o carrinho
                 localStorage.removeItem('cart');
-
                 alert("Pedido realizado com sucesso! O restaurante já foi notificado.");
-                
-                // Redireciona para a página de acompanhamento
                 window.location.href = "pedidos.html";
 
             } catch (error) {
