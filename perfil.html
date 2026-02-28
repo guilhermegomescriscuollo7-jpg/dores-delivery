@@ -40,7 +40,8 @@
         .address-card { background: #fff; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border: 1px solid #f2f2f2; }
         .address-card h3 { font-size: 1.1rem; color: #111; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;}
         
-        .form-group { margin-bottom: 12px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 0.85rem; color: #555; margin-bottom: 5px; font-weight: bold; }
         .form-group input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95rem; outline: none; background: #f9f9f9; transition: 0.2s; }
         .form-group input:focus { border-color: #ea1d2c; background: #fff; }
         .row { display: flex; gap: 10px; }
@@ -98,7 +99,7 @@
                 <button class="btn-primary" id="btn-save-addr" onclick="window.saveAddress()">Salvar Endereço</button>
             </div>
 
-            <button class="btn-secondary" onclick="alert('Área de configurações em desenvolvimento.')">
+            <button class="btn-secondary" onclick="window.openSettings()">
                 <span style="font-size: 1.2rem;">⚙️</span> Configurações do Perfil
             </button>
 
@@ -109,6 +110,37 @@
             <button class="btn-danger" onclick="window.logout()">Sair da Conta</button>
 
         </div>
+
+        <div id="settings-state" style="display: none;">
+            <div class="address-card">
+                <h3>⚙️ Editar Perfil</h3>
+                <p style="font-size:0.8rem; color:#777; margin-bottom: 15px;">Atualize seus dados pessoais e de acesso abaixo.</p>
+
+                <div class="form-group">
+                    <label>Nome Completo</label>
+                    <input type="text" id="cfg-name" placeholder="Seu nome">
+                </div>
+                
+                <div class="form-group">
+                    <label>Telefone / WhatsApp</label>
+                    <input type="tel" id="cfg-phone" placeholder="(00) 00000-0000">
+                </div>
+                
+                <div class="form-group">
+                    <label>E-mail (Usado no Login)</label>
+                    <input type="email" id="cfg-email" placeholder="seu@email.com">
+                </div>
+                
+                <div class="form-group">
+                    <label>Nova Senha</label>
+                    <input type="password" id="cfg-pass" placeholder="Deixe em branco para não alterar">
+                </div>
+
+                <button class="btn-primary" id="btn-save-cfg" onclick="window.saveProfileSettings()">Salvar Alterações</button>
+                <button class="btn-secondary" style="margin-top: 15px; justify-content: center;" onclick="window.closeSettings()">Cancelar e Voltar</button>
+            </div>
+        </div>
+
     </main>
 
     <nav class="bottom-nav">
@@ -136,10 +168,11 @@
         // Verifica Sessão do Usuário
         const loggedCustomer = JSON.parse(localStorage.getItem('loggedCustomer'));
         const isLogged = !!loggedCustomer || localStorage.getItem('isLogged') === 'true'; 
-        const userName = loggedCustomer ? loggedCustomer.name : localStorage.getItem('userName');
-        const userEmail = loggedCustomer ? loggedCustomer.email : localStorage.getItem('userEmail');
+        let userName = loggedCustomer ? loggedCustomer.name : localStorage.getItem('userName');
+        let userEmail = loggedCustomer ? loggedCustomer.email : localStorage.getItem('userEmail');
 
         let userDocId = null;
+        let fullUserData = null; // Guarda os dados completos do Firebase
 
         window.onload = async () => {
             if (!isLogged) {
@@ -153,21 +186,21 @@
                 document.getElementById('user-email').innerText = userEmail || '';
                 if(userName) document.getElementById('user-avatar').innerText = userName.charAt(0).toUpperCase();
 
-                // Busca o endereço salvo no banco de dados para mostrar na tela
+                // Busca todos os dados do banco de dados para mostrar na tela
                 try {
                     const q = query(collection(db, "customers"), where("email", "==", userEmail));
                     const querySnapshot = await getDocs(q);
                     
                     if (!querySnapshot.empty) {
                         querySnapshot.forEach((documento) => {
-                            userDocId = documento.id; // Salva o ID para atualizar depois
-                            const userData = documento.data();
+                            userDocId = documento.id; 
+                            fullUserData = documento.data(); // Salva na memória
                             
-                            if(userData.address) {
-                                document.getElementById('p-rua').value = userData.address.rua || '';
-                                document.getElementById('p-num').value = userData.address.num || '';
-                                document.getElementById('p-bairro').value = userData.address.bairro || '';
-                                document.getElementById('p-comp').value = userData.address.comp || '';
+                            if(fullUserData.address) {
+                                document.getElementById('p-rua').value = fullUserData.address.rua || '';
+                                document.getElementById('p-num').value = fullUserData.address.num || '';
+                                document.getElementById('p-bairro').value = fullUserData.address.bairro || '';
+                                document.getElementById('p-comp').value = fullUserData.address.comp || '';
                             }
                         });
                     }
@@ -208,6 +241,96 @@
                 alert("Ocorreu um erro ao salvar.");
             } finally {
                 btn.innerText = "Salvar Endereço";
+                btn.disabled = false;
+            }
+        };
+
+        // ==========================================
+        // ⚙️ LÓGICA DE EDIÇÃO DE DADOS PESSOAIS ⚙️
+        // ==========================================
+        window.openSettings = () => {
+            if(!fullUserData) {
+                alert("Aguarde um momento enquanto carregamos seus dados.");
+                return;
+            }
+            
+            // Esconde a tela principal e mostra o formulário
+            document.getElementById('logged-state').style.display = 'none';
+            document.getElementById('settings-state').style.display = 'block';
+
+            // Preenche os inputs com os dados atuais
+            document.getElementById('cfg-name').value = fullUserData.name || userName || '';
+            document.getElementById('cfg-phone').value = fullUserData.phone || '';
+            document.getElementById('cfg-email').value = fullUserData.email || userEmail || '';
+            document.getElementById('cfg-pass').value = ''; // Sempre vazio por segurança
+        };
+
+        window.closeSettings = () => {
+            document.getElementById('settings-state').style.display = 'none';
+            document.getElementById('logged-state').style.display = 'block';
+        };
+
+        window.saveProfileSettings = async () => {
+            const newName = document.getElementById('cfg-name').value.trim();
+            const newPhone = document.getElementById('cfg-phone').value.trim();
+            const newEmail = document.getElementById('cfg-email').value.trim();
+            const newPass = document.getElementById('cfg-pass').value.trim();
+
+            if (!newName || !newEmail) {
+                alert("Nome e E-mail são campos obrigatórios!");
+                return;
+            }
+
+            if (!userDocId) return;
+
+            const btn = document.getElementById('btn-save-cfg');
+            btn.innerText = "Salvando...";
+            btn.disabled = true;
+
+            try {
+                let dataToUpdate = {
+                    name: newName,
+                    phone: newPhone,
+                    email: newEmail
+                };
+                
+                // Se ele digitou uma senha nova, atualiza. Se não, mantém a velha intacta.
+                if (newPass !== '') {
+                    dataToUpdate.password = newPass; 
+                }
+
+                // Salva no Firebase
+                await updateDoc(doc(db, "customers", userDocId), dataToUpdate);
+
+                // Atualiza a memória local (Navegador)
+                let storedCust = JSON.parse(localStorage.getItem('loggedCustomer')) || {};
+                storedCust.name = newName;
+                storedCust.email = newEmail;
+                
+                localStorage.setItem('loggedCustomer', JSON.stringify(storedCust));
+                localStorage.setItem('userName', newName);
+                localStorage.setItem('userEmail', newEmail);
+
+                // Atualiza as variáveis do código para alterar a tela instantaneamente
+                userName = newName;
+                userEmail = newEmail;
+                fullUserData.name = newName;
+                fullUserData.phone = newPhone;
+                fullUserData.email = newEmail;
+
+                // Muda o visual da tela
+                document.getElementById('user-name').innerText = newName;
+                document.getElementById('user-email').innerText = newEmail;
+                document.getElementById('user-avatar').innerText = newName.charAt(0).toUpperCase();
+
+                alert("Dados do perfil atualizados com sucesso!");
+                window.closeSettings();
+
+            } catch (e) {
+                console.error(e);
+                alert("Erro ao atualizar o perfil. Tente novamente.");
+            } finally {
+                btn.innerText = "Salvar Alterações";
                 btn.disabled = false;
             }
         };
