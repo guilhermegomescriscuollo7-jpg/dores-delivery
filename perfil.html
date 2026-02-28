@@ -25,10 +25,10 @@
         .btn-primary { background: #ea1d2c; color: #fff; border: none; padding: 14px 20px; border-radius: 8px; font-weight: bold; font-size: 1rem; width: 100%; text-align: center; display: inline-block; text-decoration: none; cursor: pointer; transition: 0.2s; }
         .btn-primary:active { background: #c81824; transform: scale(0.98); }
         
-        .btn-secondary { background: #fff; color: #333; border: 1px solid #ddd; padding: 14px 20px; border-radius: 8px; font-weight: bold; font-size: 1rem; width: 100%; text-align: center; display: flex; justify-content: center; align-items: center; gap: 8px; text-decoration: none; cursor: pointer; transition: 0.2s; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .btn-secondary { background: #fff; color: #333; border: 1px solid #ddd; padding: 14px 20px; border-radius: 8px; font-weight: bold; font-size: 1rem; width: 100%; text-align: left; display: flex; justify-content: flex-start; align-items: center; gap: 10px; text-decoration: none; cursor: pointer; transition: 0.2s; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         .btn-secondary:active { background: #f9f9f9; transform: scale(0.98); }
 
-        .btn-danger { background: #fff0f0; color: #ea1d2c; border: 1px solid #fbd5d5; padding: 14px 20px; border-radius: 8px; font-weight: bold; font-size: 1rem; width: 100%; text-align: center; display: inline-block; cursor: pointer; transition: 0.2s; }
+        .btn-danger { background: #fff0f0; color: #ea1d2c; border: 1px solid #fbd5d5; padding: 14px 20px; border-radius: 8px; font-weight: bold; font-size: 1rem; width: 100%; text-align: center; display: inline-block; cursor: pointer; transition: 0.2s; margin-top: 10px; }
         .btn-danger:active { background: #fbd5d5; transform: scale(0.98); }
 
         /* CARDS DO PERFIL */
@@ -98,7 +98,13 @@
                 <button class="btn-primary" id="btn-save-addr" onclick="window.saveAddress()">Salvar Endereço</button>
             </div>
 
-            <a href="privacidade.html" class="btn-secondary">📄 Política de Privacidade</a>
+            <button class="btn-secondary" onclick="alert('Área de configurações em desenvolvimento.')">
+                <span style="font-size: 1.2rem;">⚙️</span> Configurações do Perfil
+            </button>
+
+            <a href="privacidade.html" class="btn-secondary">
+                <span style="font-size: 1.2rem;">📄</span> Política de Privacidade
+            </a>
 
             <button class="btn-danger" onclick="window.logout()">Sair da Conta</button>
 
